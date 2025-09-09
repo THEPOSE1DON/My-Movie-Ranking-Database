@@ -113,7 +113,7 @@ else:
                 st.write("📌 No poster available")
 
         with col2:
-            st.markdown(f"### #{rank}# {row['Title']} ({row['Year']})")
+            st.markdown(f"### #{rank}. {row['Title']} ({row['Year']})")
             st.write(f"🎭 Genres: {row['Genres']}")
             st.write(f"🌐 Language(s): {row['Language']}")
             st.write(f"⭐ Ultimate Score: {row['Ultimate Score']} | General Score: {row['General Score']}")
@@ -127,4 +127,5 @@ else:
                 st.markdown(f"**💭 My Comment:** {row['Comment']}")
 
         st.markdown("---")
+
 
