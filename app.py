@@ -15,10 +15,7 @@ st.title("🎬 My Movie Rankings Database")
 # --- Sidebar Filters ---
 st.sidebar.header("Filters")
 
-# Start with full dataframe
-filtered_df = df.copy()
-
-# --- Language Filter ---
+# Language filter
 all_languages = (
     df["Language"].dropna()
     .apply(lambda x: [lang.strip() for lang in str(x).split(",")])
@@ -28,11 +25,7 @@ unique_languages = sorted(set(all_languages))
 language_options = ["Select Language"] + unique_languages
 selected_language = st.sidebar.selectbox("🌍 Select Language", language_options)
 
-# Apply language filter only if a real language is selected
-if selected_language != "Select Language":
-    filtered_df = filtered_df[filtered_df["Language"].str.contains(selected_language, na=False)]
-
-# --- Genre Filter ---
+# Genre selection
 all_genres = sorted(set(g.strip() for sublist in df["Genres"].dropna().str.split(",") for g in sublist))
 selected_genres = st.sidebar.multiselect("Select Genre(s)", all_genres)
 
@@ -46,11 +39,11 @@ genre_columns = [
 ]
 selected_genre = st.sidebar.selectbox("🎭 Filter by Genre", genre_columns)
 
-# --- Year Filter ---
+# Year filter
 years = sorted(df["Year"].dropna().unique())
 selected_years = st.sidebar.multiselect("Select Year(s)", years)
 
-# --- Search Bar ---
+# Search bar
 search_term = st.text_input("🔎 Search by Movie/TV Show Name").lower()
 suggestions = []
 selected_suggestion = None
@@ -60,7 +53,7 @@ if search_term:
         selected_suggestion = st.selectbox("Did you mean:", suggestions, index=0)
 
 # --- Apply Filters ---
-filtered_df = df.copy()
+filtered_df = df.copy()  # Start with full dataframe
 
 # Search filter
 if search_term:
@@ -69,15 +62,15 @@ if search_term:
     else:
         filtered_df = filtered_df[filtered_df["Title"].str.lower().str.contains(search_term, na=False)]
 
-# Genre filter (show only movies with selected genre score > 0)
+# Genre score filter
 if selected_genre:
     filtered_df = filtered_df[filtered_df[selected_genre] > 0]
 
 # Language filter
-if selected_language:
+if selected_language != "Select Language":
     filtered_df = filtered_df[filtered_df["Language"].str.contains(selected_language, na=False)]
 
-# Genre selection filter (if multiple genres selected)
+# Genre selection filter (multi-genres)
 if selected_genres:
     filtered_df = filtered_df[
         filtered_df["Genres"].apply(lambda x: any(g in x for g in selected_genres if isinstance(x, str)))
@@ -120,5 +113,3 @@ else:
                 st.markdown(f"**💭 My Comment:** {row['Comment']}")
 
         st.markdown("---")
-
-
