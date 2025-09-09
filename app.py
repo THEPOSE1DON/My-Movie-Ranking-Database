@@ -22,7 +22,15 @@ all_languages = (
     .sum()
 )
 unique_languages = sorted(set(all_languages))
-selected_language = st.sidebar.selectbox("🌍 Select Language", unique_languages)
+
+# Add a default placeholder at the top
+language_options = ["Select Language"] + unique_languages
+
+selected_language = st.sidebar.selectbox("🌍 Select Language", language_options)
+
+# Only filter if the user picks a real language
+if selected_language != "Select Language":
+    filtered_df = filtered_df[filtered_df["Language"].str.contains(selected_language, na=False)]
 
 # --- Genre Filter ---
 all_genres = sorted(set(g.strip() for sublist in df["Genres"].dropna().str.split(",") for g in sublist))
@@ -112,3 +120,4 @@ else:
                 st.markdown(f"**💭 My Comment:** {row['Comment']}")
 
         st.markdown("---")
+
