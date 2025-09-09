@@ -5,7 +5,6 @@ import pandas as pd
 sheet_url = "https://docs.google.com/spreadsheets/d/1sO1ly233qkEqw4_bKr4s_WZwK0uAF6StDMi8pR4ZTxs/edit?usp=sharing"
 csv_url = "https://docs.google.com/spreadsheets/d/1sO1ly233qkEqw4_bKr4s_WZwK0uAF6StDMi8pR4ZTxs/export?format=csv&gid=1030199938"
 df = pd.read_csv(csv_url)
-st.write("Columns in the sheet:", df.columns.tolist())
 
 # --- Rename for convenience ---
 df.rename(columns={
@@ -219,5 +218,6 @@ else:
                 st.markdown(f"**💭 My Comment:** {row['Comment']}")
 
         st.markdown("---")  # Divider between movies
+
 
 
