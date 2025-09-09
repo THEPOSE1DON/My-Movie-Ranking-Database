@@ -62,8 +62,22 @@ if search_term:
     else:
         filtered_df = filtered_df[filtered_df["Title"].str.lower().str.contains(search_term, na=False)]
 
-# Genre score filter
-if selected_genre:
+# --- Genre Score Filter ---
+genre_columns = [
+    "Action Score", "Adventure Score", "Animation Score", "Biography Score",
+    "Comedy Score", "Crime Score", "Documentary Score", "Drama Score", "Erotic Score",
+    "Family Score", "Fantasy Score", "Feel-Good Score", "Fiction Score", "Heist Score",
+    "History Score", "Horror Score", "Musical Score", "Mystery Score", "Mythology Score",
+    "Romance Score", "Satire Score", "Science Fiction Score", "Sports Score",
+    "Superhero Score", "Survival Score", "Thriller Score", "War Score"
+]
+
+# Add placeholder
+genre_options = ["Select Genre"] + genre_columns
+selected_genre = st.sidebar.selectbox("🎭 Filter by Genre", genre_options)
+
+# Apply filter only if a real genre is selected
+if selected_genre != "Select Genre":
     filtered_df = filtered_df[filtered_df[selected_genre] > 0]
 
 # Language filter
@@ -113,3 +127,4 @@ else:
                 st.markdown(f"**💭 My Comment:** {row['Comment']}")
 
         st.markdown("---")
+
