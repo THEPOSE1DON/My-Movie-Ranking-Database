@@ -9,6 +9,10 @@ df = pd.read_csv(csv_url, quotechar='"', engine='python')
 df.columns = df.columns.str.strip()
 df.rename(columns={"Movie/TV Show Name": "Title"}, inplace=True)
 
+# --- Convert Timestamp to datetime ---
+if "Timestamp" in df.columns:
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+
 # --- App Title ---
 st.title("🎬 My Movie Rankings Database")
 
@@ -84,11 +88,15 @@ if selected_years:
     filtered_df = filtered_df[filtered_df["Year"].isin(selected_years)]
 
 # --- Sorting ---
-score_columns = ["Ultimate Score", "General Score"] + genre_columns
+score_columns = ["Ultimate Score", "General Score", "Last Watched"] + genre_columns
 sort_choice = st.sidebar.selectbox("Sort by", score_columns, index=0)  # default Ultimate Score
 sort_order = st.sidebar.radio("Order", ["Descending", "Ascending"], index=0)  # default Descending
 ascending = True if sort_order == "Ascending" else False
-filtered_df = filtered_df.sort_values(by=sort_choice, ascending=ascending).reset_index(drop=True)
+
+if sort_choice == "Last Watched":
+    filtered_df = filtered_df.sort_values(by="Timestamp", ascending=ascending).reset_index(drop=True)
+else:
+    filtered_df = filtered_df.sort_values(by=sort_choice, ascending=ascending).reset_index(drop=True)
 
 # --- Display Movies One Per Row with Ranking ---
 st.write("### Results")
@@ -105,7 +113,7 @@ else:
                 st.write("📌 No poster available")
 
         with col2:
-            st.markdown(f"### #{rank}. {row['Title']} ({row['Year']})")
+            st.markdown(f"### #{rank} {row['Title']} ({row['Year']})")
             st.write(f"🎭 Genres: {row['Genres']}")
             st.write(f"🌐 Language(s): {row['Language']}")
             st.write(f"⭐ Ultimate Score: {row['Ultimate Score']} | General Score: {row['General Score']}")
@@ -119,4 +127,3 @@ else:
                 st.markdown(f"**💭 My Comment:** {row['Comment']}")
 
         st.markdown("---")
-
