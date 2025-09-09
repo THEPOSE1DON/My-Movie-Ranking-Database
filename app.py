@@ -15,6 +15,9 @@ st.title("🎬 My Movie Rankings Database")
 # --- Sidebar Filters ---
 st.sidebar.header("Filters")
 
+# Start with full dataframe
+filtered_df = df.copy()
+
 # --- Language Filter ---
 all_languages = (
     df["Language"].dropna()
@@ -22,13 +25,10 @@ all_languages = (
     .sum()
 )
 unique_languages = sorted(set(all_languages))
-
-# Add a default placeholder at the top
 language_options = ["Select Language"] + unique_languages
-
 selected_language = st.sidebar.selectbox("🌍 Select Language", language_options)
 
-# Only filter if the user picks a real language
+# Apply language filter only if a real language is selected
 if selected_language != "Select Language":
     filtered_df = filtered_df[filtered_df["Language"].str.contains(selected_language, na=False)]
 
@@ -120,4 +120,5 @@ else:
                 st.markdown(f"**💭 My Comment:** {row['Comment']}")
 
         st.markdown("---")
+
 
