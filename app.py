@@ -88,14 +88,14 @@ score_columns = ["Ultimate Score", "General Score"] + genre_columns
 sort_choice = st.sidebar.selectbox("Sort by", score_columns, index=0)  # default Ultimate Score
 sort_order = st.sidebar.radio("Order", ["Descending", "Ascending"], index=0)  # default Descending
 ascending = True if sort_order == "Ascending" else False
-filtered_df = filtered_df.sort_values(by=sort_choice, ascending=ascending)
+filtered_df = filtered_df.sort_values(by=sort_choice, ascending=ascending).reset_index(drop=True)
 
-# --- Display Movies One Per Row ---
+# --- Display Movies One Per Row with Ranking ---
 st.write("### Results")
 if filtered_df.empty:
     st.warning("No movies found with the current filters/search.")
 else:
-    for _, row in filtered_df.iterrows():
+    for rank, (_, row) in enumerate(filtered_df.iterrows(), start=1):
         col1, col2 = st.columns([1, 2])
 
         with col1:
@@ -105,7 +105,7 @@ else:
                 st.write("📌 No poster available")
 
         with col2:
-            st.markdown(f"### {row['Title']} ({row['Year']})")
+            st.markdown(f"### #{rank} {row['Title']} ({row['Year']})")
             st.write(f"🎭 Genres: {row['Genres']}")
             st.write(f"🌐 Language(s): {row['Language']}")
             st.write(f"⭐ Ultimate Score: {row['Ultimate Score']} | General Score: {row['General Score']}")
