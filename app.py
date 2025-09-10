@@ -36,7 +36,9 @@ all_genres = sorted(set(g.strip() for sublist in df["Genres"].dropna().str.split
 selected_genres = st.sidebar.multiselect("Select Genre(s)", all_genres)
 if selected_genres:
     filtered_df = filtered_df[
-        filtered_df["Genres"].apply(lambda x: any(g in x for g in selected_genres if isinstance(x, str)))
+        filtered_df["Genres"].apply(
+            lambda x: all(g in x for g in selected_genres if isinstance(x, str))
+        )
     ]
 
 # --- Genre Score Filter (multi-select) ---
@@ -123,3 +125,4 @@ else:
                 st.markdown(f"**💭 My Comment:** {row['Comment']}")
 
         st.markdown("---")
+
