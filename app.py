@@ -98,9 +98,16 @@ else:
             st.write(f"🌐 Language(s): {row['Language']}")
             st.write(f"⭐ Ultimate Score: {row['Ultimate Score']} | General Score: {row['General Score']}")
 
-            # Show the score used for sorting, if it's a genre-specific score
+            # Show genre-specific scores for all selected genre tags
+            if selected_genres:
+                for genre in selected_genres:
+                    score_col = f"{genre} Score"
+                    if score_col in row and pd.notna(row[score_col]):
+                        st.write(f"🎯 {genre} Score: {row[score_col]}")
+
+            # Also show the score used for sorting if it's a genre-specific score
             if sort_choice in genre_columns and sort_choice in row and pd.notna(row[sort_choice]):
-                st.write(f"🎯 {sort_choice}: {row[sort_choice]}")
+                st.write(f"📊 Sorted by {sort_choice}: {row[sort_choice]}")
 
             if "Description" in row and pd.notna(row["Description"]):
                 st.markdown(f"**📝 Description:** {row['Description']}")
