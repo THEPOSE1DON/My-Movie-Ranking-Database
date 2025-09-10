@@ -30,7 +30,7 @@ selected_language = st.sidebar.selectbox("🌍 Filter by Language", language_opt
 
 # --- Genre Tag Filter ---
 all_genres = sorted(set(g.strip() for sublist in df["Genres"].dropna().str.split(",") for g in sublist))
-selected_genres = st.sidebar.multiselect("🎭 Filter by Genre Tags", all_genres)
+selected_genres = st.sidebar.multiselect("🎭 Filter by Genre(s)", all_genres)
 
 # --- Year Filter ---
 years = sorted(df["Year"].dropna().unique())
@@ -115,3 +115,4 @@ else:
                 st.markdown(f"**💭 My Comment:** {row['Comment']}")
 
         st.markdown("---")
+
