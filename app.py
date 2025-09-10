@@ -28,23 +28,9 @@ unique_languages = sorted(set(all_languages))
 language_options = ["Select Language"] + unique_languages
 selected_language = st.sidebar.selectbox("🌍 Filter by Language", language_options)
 
-if selected_language != "Select Language":
-    filtered_df = filtered_df[filtered_df["Language"].str.contains(selected_language, na=False)]
-
-# --- Genre Tag Filter (from text column) ---
+# --- Genre Tag Filter ---
 all_genres = sorted(set(g.strip() for sublist in df["Genres"].dropna().str.split(",") for g in sublist))
 selected_genres = st.sidebar.multiselect("🎭 Filter by Genre Tags", all_genres)
-
-# --- Genre Score Filter (from numeric columns) ---
-genre_columns = [
-    "Action Score", "Adventure Score", "Animation Score", "Biography Score",
-    "Comedy Score", "Crime Score", "Documentary Score", "Drama Score", "Erotic Score",
-    "Family Score", "Fantasy Score", "Feel-Good Score", "Fiction Score", "Heist Score",
-    "History Score", "Horror Score", "Musical Score", "Mystery Score", "Mythology Score",
-    "Romance Score", "Satire Score", "Science Fiction Score", "Sports Score",
-    "Superhero Score", "Survival Score", "Thriller Score", "War Score"
-]
-selected_genre = st.sidebar.selectbox("📊 Filter by Genre Score", ["Select Genre"] + genre_columns)
 
 # --- Year Filter ---
 years = sorted(df["Year"].dropna().unique())
@@ -68,10 +54,6 @@ if selected_genres:
         )
     ]
 
-# Genre score filter (only if a real genre selected)
-if selected_genre != "Select Genre":
-    filtered_df = filtered_df[filtered_df[selected_genre] > 0]
-
 # Language filter
 if selected_language != "Select Language":
     filtered_df = filtered_df[filtered_df["Language"].str.contains(selected_language, na=False)]
@@ -81,7 +63,16 @@ if selected_years:
     filtered_df = filtered_df[filtered_df["Year"].isin(selected_years)]
 
 # --- Sorting ---
+genre_columns = [
+    "Action Score", "Adventure Score", "Animation Score", "Biography Score",
+    "Comedy Score", "Crime Score", "Documentary Score", "Drama Score", "Erotic Score",
+    "Family Score", "Fantasy Score", "Feel-Good Score", "Fiction Score", "Heist Score",
+    "History Score", "Horror Score", "Musical Score", "Mystery Score", "Mythology Score",
+    "Romance Score", "Satire Score", "Science Fiction Score", "Sports Score",
+    "Superhero Score", "Survival Score", "Thriller Score", "War Score"
+]
 score_columns = ["Ultimate Score", "General Score", "Timestamp"] + genre_columns
+
 sort_choice = st.sidebar.selectbox("📌 Sort by", score_columns)
 sort_order = st.sidebar.radio("Order", ["Descending", "Ascending"])
 ascending = True if sort_order == "Ascending" else False
@@ -107,9 +98,9 @@ else:
             st.write(f"🌐 Language(s): {row['Language']}")
             st.write(f"⭐ Ultimate Score: {row['Ultimate Score']} | General Score: {row['General Score']}")
 
-            # Show genre-specific score if relevant
-            if selected_genre != "Select Genre":
-                st.write(f"🎯 {selected_genre}: {row[selected_genre]}")
+            # Show the score used for sorting, if it's a genre-specific score
+            if sort_choice in genre_columns and sort_choice in row and pd.notna(row[sort_choice]):
+                st.write(f"🎯 {sort_choice}: {row[sort_choice]}")
 
             if "Description" in row and pd.notna(row["Description"]):
                 st.markdown(f"**📝 Description:** {row['Description']}")
