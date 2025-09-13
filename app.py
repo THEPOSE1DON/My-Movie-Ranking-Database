@@ -71,22 +71,32 @@ genre_columns = [
     "Romance Score", "Satire Score", "Science Fiction Score", "Sports Score",
     "Superhero Score", "Survival Score", "Thriller Score", "War Score"
 ]
-score_columns = ["Ultimate Score", "General Score", "Timestamp"] + genre_columns
+
+# Map display names -> actual dataframe column names
+sort_options = {
+    "Ultimate Score": "Ultimate Score",
+    "General Score": "General Score",
+    "Last Watched": "Timestamp"  # display alias
+}
+for g in genre_columns:
+    sort_options[g] = g
 
 # Default sort: Ultimate Score
-default_sort = "Ultimate Score"
-sort_choice = st.sidebar.selectbox("📌 Sort by", score_columns, index=score_columns.index(default_sort))
+default_sort_display = "Ultimate Score"
+sort_choice_display = st.sidebar.selectbox("📌 Sort by", list(sort_options.keys()), index=list(sort_options.keys()).index(default_sort_display))
+sort_choice = sort_options[sort_choice_display]
+
 sort_order = st.sidebar.radio("Order", ["Descending", "Ascending"])
 ascending = True if sort_order == "Ascending" else False
 
-# Handle timestamp sorting properly
+# Handle "Last Watched" (Timestamp) sorting properly
 if sort_choice == "Timestamp":
     filtered_df["Timestamp"] = pd.to_datetime(filtered_df["Timestamp"], errors="coerce")
 
 filtered_df = filtered_df.sort_values(by=sort_choice, ascending=ascending)
 
 # --- Display Movies One Per Row ---
-st.write(f"### Results ({sort_choice})")
+st.write(f"### Results ({sort_choice_display})")
 if filtered_df.empty:
     st.warning("No movies found with the current filters/search.")
 else:
@@ -114,7 +124,7 @@ else:
 
             # Also show the score used for sorting if it's a genre-specific score
             if sort_choice in genre_columns and sort_choice in row and pd.notna(row[sort_choice]):
-                st.write(f"📊 Sorted by {sort_choice}: {row[sort_choice]}")
+                st.write(f"📊 Sorted by {sort_choice_display}: {row[sort_choice]}")
 
             if "Description" in row and pd.notna(row["Description"]):
                 st.markdown(f"**📝 Description:** {row['Description']}")
