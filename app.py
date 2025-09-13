@@ -9,10 +9,6 @@ df = pd.read_csv(csv_url, quotechar='"', engine='python')
 df.columns = df.columns.str.strip()
 df.rename(columns={"Movie/TV Show Name": "Title"}, inplace=True)
 
-# --- Convert Timestamp column to datetime ---
-if "Timestamp" in df.columns:
-    df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
-
 # --- App Title ---
 st.title("🎬 My Movie Rankings Database")
 
@@ -77,13 +73,20 @@ genre_columns = [
 ]
 score_columns = ["Ultimate Score", "General Score", "Timestamp"] + genre_columns
 
-sort_choice = st.sidebar.selectbox("📌 Sort by", score_columns, index=0)  # Default = Ultimate Score
+# Default sort: Ultimate Score
+default_sort = "Ultimate Score"
+sort_choice = st.sidebar.selectbox("📌 Sort by", score_columns, index=score_columns.index(default_sort))
 sort_order = st.sidebar.radio("Order", ["Descending", "Ascending"])
 ascending = True if sort_order == "Ascending" else False
+
+# Handle timestamp sorting properly
+if sort_choice == "Timestamp":
+    filtered_df["Timestamp"] = pd.to_datetime(filtered_df["Timestamp"], errors="coerce")
+
 filtered_df = filtered_df.sort_values(by=sort_choice, ascending=ascending)
 
 # --- Display Movies One Per Row ---
-st.write("### Results")
+st.write(f"### Results ({sort_choice})")
 if filtered_df.empty:
     st.warning("No movies found with the current filters/search.")
 else:
