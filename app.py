@@ -9,6 +9,10 @@ df = pd.read_csv(csv_url, quotechar='"', engine='python')
 df.columns = df.columns.str.strip()
 df.rename(columns={"Movie/TV Show Name": "Title"}, inplace=True)
 
+# --- Convert Timestamp column to datetime ---
+if "Timestamp" in df.columns:
+    df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors="coerce")
+
 # --- App Title ---
 st.title("🎬 My Movie Rankings Database")
 
@@ -73,7 +77,7 @@ genre_columns = [
 ]
 score_columns = ["Ultimate Score", "General Score", "Timestamp"] + genre_columns
 
-sort_choice = st.sidebar.selectbox("📌 Sort by", score_columns)
+sort_choice = st.sidebar.selectbox("📌 Sort by", score_columns, index=0)  # Default = Ultimate Score
 sort_order = st.sidebar.radio("Order", ["Descending", "Ascending"])
 ascending = True if sort_order == "Ascending" else False
 filtered_df = filtered_df.sort_values(by=sort_choice, ascending=ascending)
@@ -115,4 +119,3 @@ else:
                 st.markdown(f"**💭 My Comment:** {row['Comment']}")
 
         st.markdown("---")
-
