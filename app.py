@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import re
 
-# --- Page Config (keep wide for title centering) ---
+# --- Page Config (wide mode for big title) ---
 st.set_page_config(layout="wide")
 
 # --- Load Google Sheet ---
@@ -13,8 +13,8 @@ df = pd.read_csv(csv_url, quotechar='"', engine='python')
 df.columns = df.columns.str.strip()
 df.rename(columns={"Movie/TV Show Name": "Title"}, inplace=True)
 
-# --- App Title (keep large + wide) ---
-st.markdown("<h1 style='text-align: center; font-size: 42px;'>🎬 Noel's Movie Rankings</h1>", unsafe_allow_html=True)
+# --- App Title ---
+st.title("🎬 Noel's Movie Rankings Database")
 
 # --- Sidebar Filters ---
 st.sidebar.header("Filters")
@@ -48,12 +48,12 @@ def parse_year_range(year_str):
         return start, end
     return None, None
 
-# Collect only start years for dropdown
+# Collect all possible years from ranges
 all_years = []
 for y in df["Year"].dropna():
-    start, _ = parse_year_range(y)
+    start, end = parse_year_range(y)
     if start is not None:
-        all_years.append(start)
+        all_years.append(start)  # only store start year for dropdown
 
 unique_years = sorted(set(all_years))
 selected_years = st.sidebar.multiselect("📅 Filter by Year(s)", unique_years)
@@ -110,7 +110,11 @@ for g in genre_columns:
 
 # Default sort: Ultimate Score
 default_sort_display = "Ultimate Score"
-sort_choice_display = st.sidebar.selectbox("📌 Sort by", list(sort_options.keys()), index=list(sort_options.keys()).index(default_sort_display))
+sort_choice_display = st.sidebar.selectbox(
+    "📌 Sort by",
+    list(sort_options.keys()),
+    index=list(sort_options.keys()).index(default_sort_display)
+)
 sort_choice = sort_options[sort_choice_display]
 
 sort_order = st.sidebar.radio("Order", ["Descending", "Ascending"])
@@ -122,38 +126,42 @@ if sort_choice == "Timestamp":
 
 filtered_df = filtered_df.sort_values(by=sort_choice, ascending=ascending)
 
-# --- Display Movies One Per Row (back to original width) ---
+# --- Display Movies One Per Row (compact width in center) ---
 st.write(f"### Results ({sort_choice_display})")
 if filtered_df.empty:
     st.warning("No movies found with the current filters/search.")
 else:
-    for i, (_, row) in enumerate(filtered_df.iterrows(), start=1):
-        col1, col2 = st.columns([1, 2])  # reverted to original width
+    # Center results with side margins
+    left_space, main_area, right_space = st.columns([1, 3, 1])
 
-        with col1:
-            if isinstance(row["Poster"], str) and row["Poster"].startswith("http"):
-                st.image(row["Poster"], width=200)
-            else:
-                st.write("📌 No poster available")
+    with main_area:
+        for i, (_, row) in enumerate(filtered_df.iterrows(), start=1):
+            col1, col2 = st.columns([1, 2])  # poster + details
 
-        with col2:
-            st.markdown(f"### #{i}. {row['Title']} ({row['Year']})")
-            st.write(f"🎭 Genres: {row['Genres']}")
-            st.write(f"🌐 Language(s): {row['Language']}")
-            st.write(f"⭐ Ultimate Score: {row['Ultimate Score']} | General Score: {row['General Score']}")
+            with col1:
+                if isinstance(row["Poster"], str) and row["Poster"].startswith("http"):
+                    st.image(row["Poster"], width=200)
+                else:
+                    st.write("📌 No poster available")
 
-            if selected_genres:
-                for genre in selected_genres:
-                    score_col = f"{genre} Score"
-                    if score_col in row and pd.notna(row[score_col]):
-                        st.write(f"🎯 {genre} Score: {row[score_col]}")
+            with col2:
+                st.markdown(f"### #{i}. {row['Title']} ({row['Year']})")
+                st.write(f"🎭 Genres: {row['Genres']}")
+                st.write(f"🌐 Language(s): {row['Language']}")
+                st.write(f"⭐ Ultimate Score: {row['Ultimate Score']} | General Score: {row['General Score']}")
 
-            if sort_choice in genre_columns and sort_choice in row and pd.notna(row[sort_choice]):
-                st.write(f"📊 Sorted by {sort_choice_display}: {row[sort_choice]}")
+                if selected_genres:
+                    for genre in selected_genres:
+                        score_col = f"{genre} Score"
+                        if score_col in row and pd.notna(row[score_col]):
+                            st.write(f"🎯 {genre} Score: {row[score_col]}")
 
-            if "Description" in row and pd.notna(row["Description"]):
-                st.markdown(f"**📝 Description:** {row['Description']}")
-            if "Comment" in row and pd.notna(row["Comment"]):
-                st.markdown(f"**💭 My Comment:** {row['Comment']}")
+                if sort_choice in genre_columns and sort_choice in row and pd.notna(row[sort_choice]):
+                    st.write(f"📊 Sorted by {sort_choice_display}: {row[sort_choice]}")
 
-        st.markdown("---")
+                if "Description" in row and pd.notna(row["Description"]):
+                    st.markdown(f"**📝 Description:** {row['Description']}")
+                if "Comment" in row and pd.notna(row["Comment"]):
+                    st.markdown(f"**💭 My Comment:** {row['Comment']}")
+
+            st.markdown("---")
