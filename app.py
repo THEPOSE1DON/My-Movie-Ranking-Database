@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import re
 
 # --- Load Google Sheet ---
 csv_url = "https://docs.google.com/spreadsheets/d/1sO1ly233qkEqw4_bKr4s_WZwK0uAF6StDMi8pR4ZTxs/export?format=csv&gid=1030199938"
@@ -10,7 +11,7 @@ df.columns = df.columns.str.strip()
 df.rename(columns={"Movie/TV Show Name": "Title"}, inplace=True)
 
 # --- App Title ---
-st.title("🎬 My Movie Rankings Database")
+st.title("🎬 Noel's Movie Rankings Database")
 
 # --- Sidebar Filters ---
 st.sidebar.header("Filters")
@@ -32,9 +33,27 @@ selected_language = st.sidebar.selectbox("🌍 Filter by Language", language_opt
 all_genres = sorted(set(g.strip() for sublist in df["Genres"].dropna().str.split(",") for g in sublist))
 selected_genres = st.sidebar.multiselect("🎭 Filter by Genre(s)", all_genres)
 
-# --- Year Filter ---
-years = sorted(df["Year"].dropna().unique())
-selected_years = st.sidebar.multiselect("📅 Filter by Year(s)", years)
+# --- Year Filter (supports ranges like 2005-2020) ---
+def parse_year_range(year_str):
+    """Return (start, end) years from a string, e.g. '2005-2020' -> (2005, 2020)."""
+    if pd.isna(year_str):
+        return None, None
+    match = re.match(r"^\s*(\d{4})(?:\s*-\s*(\d{4}))?\s*$", str(year_str))
+    if match:
+        start = int(match.group(1))
+        end = int(match.group(2)) if match.group(2) else start
+        return start, end
+    return None, None
+
+# Collect all possible years from ranges
+all_years = []
+for y in df["Year"].dropna():
+    start, end = parse_year_range(y)
+    if start is not None:
+        all_years.append(start)  # only store start year for dropdown
+
+unique_years = sorted(set(all_years))
+selected_years = st.sidebar.multiselect("📅 Filter by Year(s)", unique_years)
 
 # --- Search Bar ---
 search_term = st.text_input("🔎 Search by Movie/TV Show Name").lower()
@@ -58,9 +77,15 @@ if selected_genres:
 if selected_language != "Select Language":
     filtered_df = filtered_df[filtered_df["Language"].str.contains(selected_language, na=False)]
 
-# Year filter
+# Year filter (works with ranges)
 if selected_years:
-    filtered_df = filtered_df[filtered_df["Year"].isin(selected_years)]
+    def year_in_range(row_year, selected):
+        start, end = parse_year_range(row_year)
+        if start is None:
+            return False
+        return any(sel >= start and sel <= end for sel in selected)
+
+    filtered_df = filtered_df[filtered_df["Year"].apply(lambda y: year_in_range(y, selected_years))]
 
 # --- Sorting ---
 genre_columns = [
@@ -72,11 +97,10 @@ genre_columns = [
     "Superhero Score", "Survival Score", "Thriller Score", "War Score"
 ]
 
-# Map display names -> actual dataframe column names
 sort_options = {
     "Ultimate Score": "Ultimate Score",
     "General Score": "General Score",
-    "Last Watched": "Timestamp"  # display alias
+    "Last Watched": "Timestamp"
 }
 for g in genre_columns:
     sort_options[g] = g
@@ -89,7 +113,7 @@ sort_choice = sort_options[sort_choice_display]
 sort_order = st.sidebar.radio("Order", ["Descending", "Ascending"])
 ascending = True if sort_order == "Ascending" else False
 
-# Handle "Last Watched" (Timestamp) sorting properly
+# Handle Last Watched properly
 if sort_choice == "Timestamp":
     filtered_df["Timestamp"] = pd.to_datetime(filtered_df["Timestamp"], errors="coerce")
 
@@ -115,14 +139,12 @@ else:
             st.write(f"🌐 Language(s): {row['Language']}")
             st.write(f"⭐ Ultimate Score: {row['Ultimate Score']} | General Score: {row['General Score']}")
 
-            # Show genre-specific scores for all selected genre tags
             if selected_genres:
                 for genre in selected_genres:
                     score_col = f"{genre} Score"
                     if score_col in row and pd.notna(row[score_col]):
                         st.write(f"🎯 {genre} Score: {row[score_col]}")
 
-            # Also show the score used for sorting if it's a genre-specific score
             if sort_choice in genre_columns and sort_choice in row and pd.notna(row[sort_choice]):
                 st.write(f"📊 Sorted by {sort_choice_display}: {row[sort_choice]}")
 
