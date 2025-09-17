@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import re
 
-# --- Page Config (increase width) ---
+# --- Page Config (keep wide for title centering) ---
 st.set_page_config(layout="wide")
 
 # --- Load Google Sheet ---
@@ -13,8 +13,8 @@ df = pd.read_csv(csv_url, quotechar='"', engine='python')
 df.columns = df.columns.str.strip()
 df.rename(columns={"Movie/TV Show Name": "Title"}, inplace=True)
 
-# --- App Title ---
-st.markdown("<h1 style='text-align: center; font-size: 42px;'>🎬 Noel's Movie Rankings Database</h1>", unsafe_allow_html=True)
+# --- App Title (keep large + wide) ---
+st.markdown("<h1 style='text-align: center; font-size: 42px;'>🎬 Noel's Movie Rankings</h1>", unsafe_allow_html=True)
 
 # --- Sidebar Filters ---
 st.sidebar.header("Filters")
@@ -122,17 +122,17 @@ if sort_choice == "Timestamp":
 
 filtered_df = filtered_df.sort_values(by=sort_choice, ascending=ascending)
 
-# --- Display Movies One Per Row (wider layout) ---
+# --- Display Movies One Per Row (back to original width) ---
 st.write(f"### Results ({sort_choice_display})")
 if filtered_df.empty:
     st.warning("No movies found with the current filters/search.")
 else:
     for i, (_, row) in enumerate(filtered_df.iterrows(), start=1):
-        col1, col2 = st.columns([1, 3])  # wider layout
+        col1, col2 = st.columns([1, 2])  # reverted to original width
 
         with col1:
             if isinstance(row["Poster"], str) and row["Poster"].startswith("http"):
-                st.image(row["Poster"], width=220)
+                st.image(row["Poster"], width=200)
             else:
                 st.write("📌 No poster available")
 
