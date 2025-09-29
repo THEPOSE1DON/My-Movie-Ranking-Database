@@ -150,10 +150,10 @@ else:
             with col2:
                 # Display title with Ultimate Ranking
                 st.markdown(f"### #{i}. {row['Title']} ({row['Year']})")
-                st.write(f"🏆 Ultimate Ranking: #{row['Ultimate Ranking']}")
                 st.write(f"🎭 Genres: {row['Genres']}")
                 st.write(f"🌐 Language(s): {row['Language']}")
                 st.write(f"⭐ Ultimate Score: {row['Ultimate Score']} | General Score: {row['General Score']}")
+                st.write(f"🏆 Ultimate Ranking: #{row['Ultimate Ranking']}")
 
                 if selected_genres:
                     for genre in selected_genres:
@@ -170,3 +170,4 @@ else:
                     st.markdown(f"**💭 My Comment:** {row['Comment']}")
 
             st.markdown("---")
+
