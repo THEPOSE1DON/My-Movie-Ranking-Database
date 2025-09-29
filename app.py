@@ -13,6 +13,9 @@ df = pd.read_csv(csv_url, quotechar='"', engine='python')
 df.columns = df.columns.str.strip()
 df.rename(columns={"Movie/TV Show Name": "Title"}, inplace=True)
 
+# --- Compute Ultimate Ranking (always based on Ultimate Score descending) ---
+df["Ultimate Ranking"] = df["Ultimate Score"].rank(method="min", ascending=False).astype(int)
+
 # --- App Title ---
 st.title("🎬 Noel's Movie Rankings Database")
 
@@ -145,7 +148,9 @@ else:
                     st.write("📌 No poster available")
 
             with col2:
+                # Display title with Ultimate Ranking
                 st.markdown(f"### #{i}. {row['Title']} ({row['Year']})")
+                st.write(f"🏆 Ultimate Ranking: #{row['Ultimate Ranking']}")
                 st.write(f"🎭 Genres: {row['Genres']}")
                 st.write(f"🌐 Language(s): {row['Language']}")
                 st.write(f"⭐ Ultimate Score: {row['Ultimate Score']} | General Score: {row['General Score']}")
