@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import re
 
-# --- Page Config (wide mode for big title) ---
+# --- Page Config (wide mode) ---
 st.set_page_config(layout="wide")
 
 # --- Load Google Sheet ---
@@ -16,7 +16,7 @@ df.rename(columns={"Movie/TV Show Name": "Title"}, inplace=True)
 # --- Compute Ultimate Ranking ---
 df["Ultimate Ranking"] = df["Ultimate Score"].rank(method="min", ascending=False).astype(int)
 
-# --- Custom Title (tighter spacing) ---
+# --- Custom Title ---
 st.markdown("""
     <h1 style='text-align: center; margin-bottom: 0.3rem;'>🎬 Noel's Movie Rankings Database</h1>
 """, unsafe_allow_html=True)
@@ -28,53 +28,69 @@ st.sidebar.header("Filters")
 if "page" not in st.session_state:
     st.session_state.page = "Results"
 
-# --- CSS for buttons and layout ---
-st.markdown("""
+# --- CSS for buttons and hover effects ---
+st.markdown(f"""
     <style>
-    /* Layout container for the two buttons */
-    .button-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        margin-top: 0.2em;   /* tighter gap above */
-        margin-bottom: 1.2em;
-    }
-
-    /* Button styles */
-    .stButton>button {
+    /* All buttons: large, wide, smooth hover */
+    .stButton>button {{
         height: 3.2em !important;
+        width: 85% !important;
         font-size: 1.1em !important;
         font-weight: 600 !important;
         border-radius: 10px !important;
-    }
+        background-color: #f0f0f0;
+        color: black;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }}
+
+    /* Active page button */
+    .active-button>button {{
+        background-color: #4CAF50 !important;
+        color: white !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }}
+
+    /* Hover effect for all buttons */
+    .stButton>button:hover {{
+        background-color: #d1d1d1;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }}
+
+    /* Hover effect for active button */
+    .active-button>button:hover {{
+        background-color: #45a049 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+    }}
 
     /* Align Results (right inward) and Stats (left inward) */
-    .left-col {
+    .left-col {{
         display: flex;
         justify-content: flex-end;
-    }
-    .right-col {
+    }}
+    .right-col {{
         display: flex;
         justify-content: flex-start;
-    }
+    }}
     </style>
 """, unsafe_allow_html=True)
 
-# --- Two wide inward-facing buttons ---
+# --- Two inward-facing buttons ---
 col_left, col_right = st.columns(2)
 
 with col_left:
-    st.markdown('<div class="left-col">', unsafe_allow_html=True)
-    results_clicked = st.button("📋 Results", key="results_btn", use_container_width=False)
+    st.markdown(f'<div class="left-col {"active-button" if st.session_state.page=="Results" else ""}">', unsafe_allow_html=True)
+    results_clicked = st.button("📋 Results", key="results_btn", use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 with col_right:
-    st.markdown('<div class="right-col">', unsafe_allow_html=True)
-    stats_clicked = st.button("📊 Stats", key="stats_btn", use_container_width=False)
+    st.markdown(f'<div class="right-col {"active-button" if st.session_state.page=="Stats" else ""}">', unsafe_allow_html=True)
+    stats_clicked = st.button("📊 Stats", key="stats_btn", use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- Handle navigation ---
+# --- Handle page navigation ---
 if results_clicked:
     st.session_state.page = "Results"
 elif stats_clicked:
