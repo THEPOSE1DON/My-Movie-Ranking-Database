@@ -27,36 +27,53 @@ if "page" not in st.session_state:
     st.session_state.page = "Results"
 
 # --- Page Switch Buttons (above search bar) ---
-# Add custom CSS for large, equal-sized, spaced buttons
 st.markdown("""
     <style>
-    div[data-testid="column"] {
+    /* Create a clean two-button layout that hugs the center line */
+    .button-container {
         display: flex;
-        justify-content: center;
+        justify-content: space-between;
         align-items: center;
+        width: 100%;
+        margin-bottom: 1.5em;
     }
-    .page-button {
-        width: 80%;
-        height: 3.2em;
+    .left-button, .right-button {
+        flex: 0 0 42%;              /* make both wide but not too wide */
+        height: 3.2em;              /* roughly search bar height */
         font-size: 1.1em;
         font-weight: 600;
         border-radius: 10px;
     }
+    .left-button {
+        display: flex;
+        justify-content: flex-end;  /* push Results toward center */
+    }
+    .right-button {
+        display: flex;
+        justify-content: flex-start; /* push Stats toward center */
+    }
     </style>
 """, unsafe_allow_html=True)
 
-col_left, col_spacer, col_right = st.columns([3, 1, 3])
+# Two side-by-side buttons aligned toward the center
+col_left, col_right = st.columns(2)
 
 with col_left:
-    results_clicked = st.button("📋 Results", key="results_btn", use_container_width=False)
-with col_right:
-    stats_clicked = st.button("📊 Stats", key="stats_btn", use_container_width=False)
+    st.markdown('<div class="left-button">', unsafe_allow_html=True)
+    results_clicked = st.button("📋 Results", key="results_btn", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# Handle navigation
+with col_right:
+    st.markdown('<div class="right-button">', unsafe_allow_html=True)
+    stats_clicked = st.button("📊 Stats", key="stats_btn", use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# --- Handle navigation ---
 if results_clicked:
     st.session_state.page = "Results"
 elif stats_clicked:
     st.session_state.page = "Stats"
+
 
 # --- PAGE 1: RESULTS ---
 if st.session_state.page == "Results":
@@ -195,4 +212,5 @@ if st.session_state.page == "Results":
 elif st.session_state.page == "Stats":
     st.header("📊 Stats Page")
     st.info("This section will display movie statistics soon. Stay tuned!")
+
 
