@@ -250,23 +250,24 @@ fig_lang.update_layout(
 st.plotly_chart(fig_lang, use_container_width=True)
 
     # --- Genre Bar Graph ---
-    genre_counts = df["Genres"].dropna().str.split(",").explode().str.strip().value_counts()
-    genre_counts = genre_counts.sort_values(ascending=True)
-    fig_genre = px.bar(
-        genre_counts,
-        x=genre_counts.values,
-        y=genre_counts.index,
-        orientation='h',
-        labels={'x':'Number of Movies/TV Shows', 'y':'Genre'},
-        text=genre_counts.values,
-        color=genre_counts.values,
-        color_continuous_scale='Cividis'
-    )
-    fig_genre.update_layout(
-        title="Movies/TV Shows by Genre",
-        showlegend=False,
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=20, r=20, t=40, b=20)
-    )
-    st.plotly_chart(fig_genre, use_container_width=True)
+genre_counts = df["Genres"].dropna().str.split(",").explode().str.strip().value_counts()
+genre_counts = genre_counts.sort_values(ascending=True)
+fig_genre = px.bar(
+    genre_counts,
+    x=genre_counts.values,
+    y=genre_counts.index,
+    orientation='h',
+    labels={'x':'Number of Movies/TV Shows', 'y':'Genre'},
+    text=genre_counts.values,
+    color=genre_counts.values,
+    color_continuous_scale='Cividis'
+)
+fig_genre.update_layout(
+    title="Movies/TV Shows by Genre",
+    showlegend=False,
+    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor='rgba(0,0,0,0)',
+    margin=dict(l=20, r=20, t=40, b=20)
+)
+st.plotly_chart(fig_genre, use_container_width=True)
+
