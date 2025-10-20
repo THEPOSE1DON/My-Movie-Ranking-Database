@@ -243,10 +243,24 @@ fig_lang.add_trace(
 fig_lang.update_layout(
     plot_bgcolor='rgba(0,0,0,0)',
     paper_bgcolor='rgba(0,0,0,0)',
-    xaxis=dict(showgrid=False, showline=False, tickangle=-45),
-    yaxis=dict(showgrid=False, showline=False, showticklabels=False),
+    xaxis=dict(
+        showgrid=False, 
+        showline=False, 
+        tickangle=-45,
+        tickfont=dict(color='white')
+    ),
+    yaxis=dict(
+        showgrid=False, 
+        showline=False, 
+        showticklabels=False
+    ),
     margin=dict(l=20, r=150, t=60, b=60),
-    title=dict(text="Movies/TV Shows by Language", x=0.5, xanchor='center')
+    title=dict(
+        text="Movies/TV Shows by Language", 
+        x=0.5, 
+        xanchor='center',
+        font=dict(color='white')
+    )
 )
 
 # --- Add circular numbers above bars ---
@@ -257,13 +271,13 @@ for xi, yi in zip(languages, counts):
         x0=xi, x1=xi,
         y0=yi + 0.5, y1=yi + 2.5,  # height of circle above bar
         xanchor="center",
-        line_color="black",
+        line_color="white",
         fillcolor="white",
     )
     fig_lang.add_annotation(
         x=xi,
         y=yi + 1.5,
-        text=str(yi),
+        text=f"<b style='color:black'>{yi}</b>",  # black text inside white circle for visibility
         showarrow=False,
         font=dict(size=12, color='black'),
         align='center'
@@ -274,10 +288,10 @@ fig_lang.add_annotation(
     x=1.05,  # slightly outside the plot area on the right
     y=0.5,
     xref='paper', yref='paper',
-    text=f"<b style='font-size:32px'>{total_movies}</b><br>Movies and Shows watched",
+    text=f"<b style='font-size:32px; color:white'>{total_movies}</b><br><span style='color:white;'>Movies and Shows watched</span>",
     showarrow=False,
     align='center',
-    font=dict(color='black')
+    font=dict(color='white')
 )
 
 st.plotly_chart(fig_lang, use_container_width=True)
@@ -303,6 +317,7 @@ fig_genre.update_layout(
     margin=dict(l=20, r=20, t=40, b=20)
 )
 st.plotly_chart(fig_genre, use_container_width=True)
+
 
 
 
