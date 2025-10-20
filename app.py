@@ -27,13 +27,36 @@ if "page" not in st.session_state:
     st.session_state.page = "Results"
 
 # --- Page Switch Buttons (above search bar) ---
-col_btn1, col_btn2, col_spacer = st.columns([1, 1, 6])
-with col_btn1:
-    if st.button("📋 Results"):
-        st.session_state.page = "Results"
-with col_btn2:
-    if st.button("📊 Stats"):
-        st.session_state.page = "Stats"
+# Add custom CSS for large, equal-sized, spaced buttons
+st.markdown("""
+    <style>
+    div[data-testid="column"] {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .page-button {
+        width: 80%;
+        height: 3.2em;
+        font-size: 1.1em;
+        font-weight: 600;
+        border-radius: 10px;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+col_left, col_spacer, col_right = st.columns([3, 1, 3])
+
+with col_left:
+    results_clicked = st.button("📋 Results", key="results_btn", use_container_width=False)
+with col_right:
+    stats_clicked = st.button("📊 Stats", key="stats_btn", use_container_width=False)
+
+# Handle navigation
+if results_clicked:
+    st.session_state.page = "Results"
+elif stats_clicked:
+    st.session_state.page = "Stats"
 
 # --- PAGE 1: RESULTS ---
 if st.session_state.page == "Results":
@@ -172,3 +195,4 @@ if st.session_state.page == "Results":
 elif st.session_state.page == "Stats":
     st.header("📊 Stats Page")
     st.info("This section will display movie statistics soon. Stay tuned!")
+
