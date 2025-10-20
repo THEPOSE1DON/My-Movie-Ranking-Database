@@ -270,14 +270,14 @@ circle_radius = max(counts) * 0.03
 for i, (lang, count) in enumerate(zip(languages, counts)):
     fig_lang.add_shape(
         type="circle",
-        xref="x", yref="y",
-        x0=i - 0.3, x1=i + 0.3,
+        xref="x domain",  # ✅ keep only one xref
+        yref="y",
+        x0=i / len(languages) - 0.015,
+        x1=i / len(languages) + 0.015,
         y0=count + circle_radius / 2,
         y1=count + circle_radius * 2.5,
         line_color="white",
-        fillcolor="white",
-        xref="x domain",
-        yref="y"
+        fillcolor="white"
     )
     fig_lang.add_annotation(
         x=lang,
@@ -322,6 +322,7 @@ fig_genre.update_layout(
     margin=dict(l=20, r=20, t=40, b=20)
 )
 st.plotly_chart(fig_genre, use_container_width=True)
+
 
 
 
