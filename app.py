@@ -3,7 +3,7 @@ import pandas as pd
 import re
 import plotly.express as px
 
-# --- Page Config ---
+# --- Page Config (wide mode) ---
 st.set_page_config(layout="wide")
 
 # --- Load Google Sheet ---
@@ -31,46 +31,45 @@ if "page" not in st.session_state:
 
 # --- CSS for buttons ---
 st.markdown("""
-<style>
-/* Buttons style */
-.stButton>button {
-    height: 3.2em !important;
-    width: 85% !important;
-    font-size: 1.1em !important;
-    font-weight: 600 !important;
-    border-radius: 10px !important;
-    background-color: #f0f0f0;
-    color: black;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* Active button */
-.active-button>button {
-    background-color: #4CAF50 !important;
-    color: white !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-
-/* Hover effect */
-.stButton>button:hover {
-    background-color: #d1d1d1;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-.active-button>button:hover {
-    background-color: #45a049 !important;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.25);
-}
-
-/* Align Results (right inward) and Stats (left inward) */
-.left-col { display: flex; justify-content: flex-end; }
-.right-col { display: flex; justify-content: flex-start; }
-</style>
+    <style>
+    .stButton>button {
+        height: 3.2em !important;
+        width: 85% !important;
+        font-size: 1.1em !important;
+        font-weight: 600 !important;
+        border-radius: 10px !important;
+        background-color: #f0f0f0;
+        color: black;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .active-button>button {
+        background-color: #4CAF50 !important;
+        color: white !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .stButton>button:hover {
+        background-color: #d1d1d1;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .active-button>button:hover {
+        background-color: #45a049 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+    }
+    .left-col {
+        display: flex;
+        justify-content: flex-end;
+    }
+    .right-col {
+        display: flex;
+        justify-content: flex-start;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
-# --- Inward-facing buttons ---
+# --- Two inward-facing buttons ---
 col_left, col_right = st.columns(2)
 
 with col_left:
@@ -83,15 +82,24 @@ with col_right:
     stats_clicked = st.button("📊 Stats", key="stats_btn", use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- Page navigation ---
+# --- Handle page navigation ---
 if results_clicked:
     st.session_state.page = "Results"
 elif stats_clicked:
     st.session_state.page = "Stats"
 
-# =========================
-# PAGE 1: RESULTS
-# =========================
+# --- Helper function for year parsing ---
+def parse_year_range(year_str):
+    if pd.isna(year_str):
+        return None, None
+    match = re.match(r"^\s*(\d{4})(?:\s*-\s*(\d{4}))?\s*$", str(year_str))
+    if match:
+        start = int(match.group(1))
+        end = int(match.group(2)) if match.group(2) else start
+        return start, end
+    return None, None
+
+# --- PAGE 1: RESULTS ---
 if st.session_state.page == "Results":
     filtered_df = df.copy()
 
@@ -106,25 +114,15 @@ if st.session_state.page == "Results":
     selected_genres = st.sidebar.multiselect("🎭 Filter by Genre(s)", all_genres)
 
     # --- Year Filter ---
-    def parse_year_range(year_str):
-        if pd.isna(year_str):
-            return None, None
-        match = re.match(r"^\s*(\d{4})(?:\s*-\s*(\d{4}))?\s*$", str(year_str))
-        if match:
-            start = int(match.group(1))
-            end = int(match.group(2)) if match.group(2) else start
-            return start, end
-        return None, None
-
     all_years = []
     for y in df["Year"].dropna():
-        start, end = parse_year_range(y)
+        start, _ = parse_year_range(y)
         if start is not None:
             all_years.append(start)
     unique_years = sorted(set(all_years))
     selected_years = st.sidebar.multiselect("📅 Filter by Year(s)", unique_years)
 
-    # --- Search ---
+    # --- Search Bar ---
     st.markdown("### Search")
     search_term = st.text_input("🔎 Search by Movie/TV Show Name").lower()
 
@@ -145,36 +143,43 @@ if st.session_state.page == "Results":
 
     # --- Sorting ---
     genre_columns = [
-        "Action Score","Adventure Score","Animation Score","Biography Score","Comedy Score","Crime Score",
-        "Documentary Score","Drama Score","Erotic Score","Family Score","Fantasy Score","Feel-Good Score",
-        "Fiction Score","Heist Score","History Score","Horror Score","Musical Score","Mystery Score",
-        "Mythology Score","Romance Score","Satire Score","Science Fiction Score","Sports Score",
-        "Superhero Score","Survival Score","Thriller Score","War Score"
+        "Action Score", "Adventure Score", "Animation Score", "Biography Score",
+        "Comedy Score", "Crime Score", "Documentary Score", "Drama Score", "Erotic Score",
+        "Family Score", "Fantasy Score", "Feel-Good Score", "Fiction Score", "Heist Score",
+        "History Score", "Horror Score", "Musical Score", "Mystery Score", "Mythology Score",
+        "Romance Score", "Satire Score", "Science Fiction Score", "Sports Score",
+        "Superhero Score", "Survival Score", "Thriller Score", "War Score"
     ]
-    sort_options = {"Ultimate Score": "Ultimate Score","General Score":"General Score","Last Watched":"Timestamp"}
+    sort_options = {"Ultimate Score": "Ultimate Score", "General Score": "General Score", "Last Watched": "Timestamp"}
     for g in genre_columns:
         sort_options[g] = g
+
     default_sort_display = "Ultimate Score"
     sort_choice_display = st.sidebar.selectbox(
-        "📌 Sort by", list(sort_options.keys()), index=list(sort_options.keys()).index(default_sort_display)
+        "📌 Sort by",
+        list(sort_options.keys()),
+        index=list(sort_options.keys()).index(default_sort_display)
     )
     sort_choice = sort_options[sort_choice_display]
-    sort_order = st.sidebar.radio("Order", ["Descending","Ascending"])
-    ascending = sort_order == "Ascending"
+    sort_order = st.sidebar.radio("Order", ["Descending", "Ascending"])
+    ascending = True if sort_order == "Ascending" else False
+
     if sort_choice == "Timestamp":
         filtered_df["Timestamp"] = pd.to_datetime(filtered_df["Timestamp"], errors="coerce")
+
     filtered_df = filtered_df.sort_values(by=sort_choice, ascending=ascending)
 
-    # --- Display ---
+    # --- Display Results ---
     results_count = len(filtered_df)
     st.write(f"### Results ({sort_choice_display}) — {results_count} found")
+
     if filtered_df.empty:
         st.warning("No movies found with the current filters/search.")
     else:
-        left_space, main_area, right_space = st.columns([1,3,1])
+        left_space, main_area, right_space = st.columns([1, 3, 1])
         with main_area:
             for i, (_, row) in enumerate(filtered_df.iterrows(), start=1):
-                col1, col2 = st.columns([1,2])
+                col1, col2 = st.columns([1, 2])
                 with col1:
                     if isinstance(row["Poster"], str) and row["Poster"].startswith("http"):
                         st.image(row["Poster"], width=200)
@@ -199,55 +204,51 @@ if st.session_state.page == "Results":
                         st.markdown(f"**💭 My Comment:** {row['Comment']}")
                 st.markdown("---")
 
-# =========================
-# PAGE 2: STATS
-# =========================
-elif st.session_state.page == "Stats":
+# --- PAGE 2: STATS ---
+if st.session_state.page == "Stats":
     st.header("📊 Statistics")
     st.info("Visual representation of movies by Language and Genre")
 
-    # --- LANGUAGE BAR GRAPH ---
-    language_counts = df["Language"].dropna().str.split(",").explode().str.strip().value_counts().sort_values(ascending=True)
+    # --- Language Bar Graph ---
+    language_counts = df["Language"].dropna().str.split(",").explode().str.strip().value_counts()
+    language_counts = language_counts.sort_values(ascending=True)
     fig_lang = px.bar(
+        language_counts,
         x=language_counts.values,
         y=language_counts.index,
         orientation='h',
+        labels={'x':'Number of Movies/TV Shows', 'y':'Language'},
         text=language_counts.values,
-        labels={'x':'Number of Movies/TV Shows','y':'Language'},
         color=language_counts.values,
         color_continuous_scale='Viridis'
     )
-    fig_lang.update_traces(marker=dict(line=dict(width=0)), hovertemplate='%{y}: %{x}')
     fig_lang.update_layout(
         title="Movies/TV Shows by Language",
         showlegend=False,
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=20,r=20,t=40,b=20),
-        xaxis=dict(showgrid=False, showline=False, zeroline=False),
-        yaxis=dict(showgrid=False, showline=False, zeroline=False)
+        margin=dict(l=20, r=20, t=40, b=20)
     )
     st.plotly_chart(fig_lang, use_container_width=True)
 
-    # --- GENRE BAR GRAPH ---
-    genre_counts = df["Genres"].dropna().str.split(",").explode().str.strip().value_counts().sort_values(ascending=True)
+    # --- Genre Bar Graph ---
+    genre_counts = df["Genres"].dropna().str.split(",").explode().str.strip().value_counts()
+    genre_counts = genre_counts.sort_values(ascending=True)
     fig_genre = px.bar(
+        genre_counts,
         x=genre_counts.values,
         y=genre_counts.index,
         orientation='h',
+        labels={'x':'Number of Movies/TV Shows', 'y':'Genre'},
         text=genre_counts.values,
-        labels={'x':'Number of Movies/TV Shows','y':'Genre'},
         color=genre_counts.values,
         color_continuous_scale='Cividis'
     )
-    fig_genre.update_traces(marker=dict(line=dict(width=0)), hovertemplate='%{y}: %{x}')
     fig_genre.update_layout(
         title="Movies/TV Shows by Genre",
         showlegend=False,
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=20,r=20,t=40,b=20),
-        xaxis=dict(showgrid=False, showline=False, zeroline=False),
-        yaxis=dict(showgrid=False, showline=False, zeroline=False)
+        margin=dict(l=20, r=20, t=40, b=20)
     )
     st.plotly_chart(fig_genre, use_container_width=True)
