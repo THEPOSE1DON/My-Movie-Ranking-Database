@@ -220,7 +220,6 @@ language_counts = (
     .str.strip()
     .value_counts()
 )
-
 languages = language_counts.index.tolist()
 counts = language_counts.values.tolist()
 total_movies = len(df)
@@ -228,52 +227,57 @@ total_movies = len(df)
 # --- Create figure ---
 fig_lang = go.Figure()
 
-# Add bars
+# Add vertical bars
 fig_lang.add_trace(
     go.Bar(
         x=languages,
         y=counts,
-        text=counts,  # text will be replaced by circles
-        textposition='none',  # we will add custom circle annotations
         marker_color=counts,
         marker_colorscale='Viridis',
-        marker_line_width=0
+        marker_line_width=0,
+        textposition='none'
     )
 )
 
-# --- Remove background grid lines ---
+# --- Remove grid and background ---
 fig_lang.update_layout(
     plot_bgcolor='rgba(0,0,0,0)',
     paper_bgcolor='rgba(0,0,0,0)',
     xaxis=dict(showgrid=False, showline=False, tickangle=-45),
     yaxis=dict(showgrid=False, showline=False, showticklabels=False),
-    margin=dict(l=20, r=100, t=40, b=60),  # extra space on right for big number
-    title=dict(
-        text="Movies/TV Shows by Language",
-        x=0.5,
-        xanchor='center'
-    ),
+    margin=dict(l=20, r=150, t=60, b=60),
+    title=dict(text="Movies/TV Shows by Language", x=0.5, xanchor='center')
 )
 
-# --- Add numbers on top of bars in circles ---
+# --- Add circular numbers above bars ---
 for xi, yi in zip(languages, counts):
+    fig_lang.add_shape(
+        type="circle",
+        xref="x", yref="y",
+        x0=xi, x1=xi,
+        y0=yi + 0.5, y1=yi + 2.5,  # height of circle above bar
+        xanchor="center",
+        line_color="black",
+        fillcolor="white",
+    )
     fig_lang.add_annotation(
         x=xi,
-        y=yi + 0.5,  # slightly above bar
-        text=f"<span style='display:inline-block; border-radius:50%; background:#fff; padding:5px 10px;'>{yi}</span>",
+        y=yi + 1.5,
+        text=str(yi),
         showarrow=False,
-        font=dict(color='black', size=12),
+        font=dict(size=12, color='black'),
         align='center'
     )
 
-# --- Add BIG total number on the right ---
+# --- Add BIG number on the right ---
 fig_lang.add_annotation(
-    x=len(languages) - 0.5,  # position roughly at the right side
-    y=max(counts)/2,          # vertically centered
+    x=1.05,  # slightly outside the plot area on the right
+    y=0.5,
     xref='paper', yref='paper',
     text=f"<b style='font-size:32px'>{total_movies}</b><br>Movies and Shows watched",
     showarrow=False,
-    align='center'
+    align='center',
+    font=dict(color='black')
 )
 
 st.plotly_chart(fig_lang, use_container_width=True)
@@ -299,5 +303,6 @@ fig_genre.update_layout(
     margin=dict(l=20, r=20, t=40, b=20)
 )
 st.plotly_chart(fig_genre, use_container_width=True)
+
 
 
