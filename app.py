@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import re
+import plotly.express as px  # <- moved import here
 
 # --- Page Config (wide mode) ---
 st.set_page_config(layout="wide")
@@ -31,7 +32,6 @@ if "page" not in st.session_state:
 # --- CSS for buttons and hover effects ---
 st.markdown(f"""
     <style>
-    /* All buttons: large, wide, smooth hover */
     .stButton>button {{
         height: 3.2em !important;
         width: 85% !important;
@@ -43,37 +43,23 @@ st.markdown(f"""
         transition: all 0.2s ease;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }}
-
-    /* Active page button */
     .active-button>button {{
         background-color: #4CAF50 !important;
         color: white !important;
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }}
-
-    /* Hover effect for all buttons */
     .stButton>button:hover {{
         background-color: #d1d1d1;
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }}
-
-    /* Hover effect for active button */
     .active-button>button:hover {{
         background-color: #45a049 !important;
         transform: translateY(-2px);
         box-shadow: 0 6px 12px rgba(0,0,0,0.25);
     }}
-
-    /* Align Results (right inward) and Stats (left inward) */
-    .left-col {{
-        display: flex;
-        justify-content: flex-end;
-    }}
-    .right-col {{
-        display: flex;
-        justify-content: flex-start;
-    }}
+    .left-col {{ display: flex; justify-content: flex-end; }}
+    .right-col {{ display: flex; justify-content: flex-start; }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -96,8 +82,9 @@ if results_clicked:
 elif stats_clicked:
     st.session_state.page = "Stats"
 
-# --- PAGE 1: RESULTS ---
+# --- PAGE SELECTION ---
 if st.session_state.page == "Results":
+
     filtered_df = df.copy()
 
     # --- Language Filter ---
@@ -223,17 +210,15 @@ if st.session_state.page == "Results":
                         st.markdown(f"**💭 My Comment:** {row['Comment']}")
                 st.markdown("---")
 
-import plotly.express as px
-
 # --- PAGE 2: STATS ---
 elif st.session_state.page == "Stats":
-    st.header("📊 Statistics")
 
+    st.header("📊 Statistics")
     st.info("Visual representation of movies by Language and Genre")
 
     # --- Language Bar Graph ---
     language_counts = df["Language"].dropna().str.split(",").explode().str.strip().value_counts()
-    language_counts = language_counts.sort_values(ascending=True)  # so largest on top for horizontal
+    language_counts = language_counts.sort_values(ascending=True)
     fig_lang = px.bar(
         language_counts,
         x=language_counts.values,
