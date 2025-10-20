@@ -130,7 +130,8 @@ if sort_choice == "Timestamp":
 filtered_df = filtered_df.sort_values(by=sort_choice, ascending=ascending)
 
 # --- Display Movies One Per Row (compact width in center) ---
-st.write(f"### Results ({sort_choice_display})")
+results_count = len(filtered_df)
+st.write(f"### Results ({sort_choice_display}) — {results_count} found")
 if filtered_df.empty:
     st.warning("No movies found with the current filters/search.")
 else:
@@ -170,5 +171,3 @@ else:
                     st.markdown(f"**💭 My Comment:** {row['Comment']}")
 
             st.markdown("---")
-
-
