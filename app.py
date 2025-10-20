@@ -1,8 +1,3 @@
-import sys
-import streamlit as st
-
-st.write("Python executable:", sys.executable)
-
 import streamlit as st
 import pandas as pd
 import re
@@ -214,27 +209,45 @@ if st.session_state.page == "Stats":
     st.header("📊 Statistics")
     st.info("Visual representation of movies by Language and Genre")
 
-    # --- Language Bar Graph ---
-    language_counts = df["Language"].dropna().str.split(",").explode().str.strip().value_counts()
-    language_counts = language_counts.sort_values(ascending=True)
-    fig_lang = px.bar(
-        language_counts,
-        x=language_counts.values,
-        y=language_counts.index,
-        orientation='h',
-        labels={'x':'Number of Movies/TV Shows', 'y':'Language'},
-        text=language_counts.values,
-        color=language_counts.values,
-        color_continuous_scale='Viridis'
-    )
-    fig_lang.update_layout(
-        title="Movies/TV Shows by Language",
-        showlegend=False,
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=20, r=20, t=40, b=20)
-    )
-    st.plotly_chart(fig_lang, use_container_width=True)
+  # --- Language Bar Graph ---
+language_counts = (
+    df["Language"]
+    .dropna()
+    .str.split(",")
+    .explode()
+    .str.strip()
+    .value_counts()
+    .sort_values(ascending=False)
+)
+
+# Create vertical bar chart
+fig_lang = px.bar(
+    x=language_counts.index,
+    y=language_counts.values,
+    text=language_counts.values,
+    labels={'x':'Language', 'y':'Number of Movies/TV Shows'},
+    color=language_counts.values,
+    color_continuous_scale='Viridis'
+)
+
+# Update layout to match the style of your example
+fig_lang.update_traces(
+    texttemplate='%{text}', textposition='outside', marker_line_width=0
+)
+fig_lang.update_layout(
+    title_text="Movies/TV Shows by Language",
+    title_x=0.5,
+    xaxis_title='Language',
+    yaxis_title='Number of Movies/TV Shows',
+    plot_bgcolor='white',
+    paper_bgcolor='white',
+    uniformtext_minsize=10,
+    uniformtext_mode='hide',
+    margin=dict(l=20, r=20, t=40, b=20),
+    coloraxis_showscale=False
+)
+
+st.plotly_chart(fig_lang, use_container_width=True)
 
     # --- Genre Bar Graph ---
     genre_counts = df["Genres"].dropna().str.split(",").explode().str.strip().value_counts()
@@ -257,4 +270,3 @@ if st.session_state.page == "Stats":
         margin=dict(l=20, r=20, t=40, b=20)
     )
     st.plotly_chart(fig_genre, use_container_width=True)
-
