@@ -28,38 +28,47 @@ if "page" not in st.session_state:
 
 # --- Page Switch Buttons (above search bar) ---
 
-# Tighten space between the title and the buttons
+# CSS styling (tighten spacing + large centered buttons)
 st.markdown("""
     <style>
-    h1 {
-        margin-bottom: 0.4em !important; /* reduce gap under the title */
+    /* Reduce space below the title */
+    div[data-testid="stHeading"] {
+        margin-bottom: 0.3rem !important;
+        padding-bottom: 0rem !important;
     }
+
+    /* Layout container for the two buttons */
     .button-container {
         display: flex;
         justify-content: space-between;
         align-items: center;
         width: 100%;
-        margin-top: 0.2em;   /* smaller gap above buttons */
+        margin-top: 0.3em;   /* small space above buttons */
         margin-bottom: 1.2em;
     }
+
+    /* Base button styles */
     .left-button, .right-button {
-        flex: 0 0 42%;              /* wide but not full width */
-        height: 3.2em;              /* match search bar height */
+        flex: 0 0 42%;
+        height: 3.2em;
         font-size: 1.1em;
         font-weight: 600;
         border-radius: 10px;
     }
+
+    /* Align Results and Stats inward */
     .left-button {
         display: flex;
-        justify-content: flex-end;  /* Results button toward center */
+        justify-content: flex-end;
     }
     .right-button {
         display: flex;
-        justify-content: flex-start; /* Stats button toward center */
+        justify-content: flex-start;
     }
     </style>
 """, unsafe_allow_html=True)
 
+# --- Two wide inward-facing buttons ---
 col_left, col_right = st.columns(2)
 
 with col_left:
@@ -215,6 +224,7 @@ if st.session_state.page == "Results":
 elif st.session_state.page == "Stats":
     st.header("📊 Stats Page")
     st.info("This section will display movie statistics soon. Stay tuned!")
+
 
 
 
