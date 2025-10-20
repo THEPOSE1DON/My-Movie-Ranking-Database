@@ -16,8 +16,10 @@ df.rename(columns={"Movie/TV Show Name": "Title"}, inplace=True)
 # --- Compute Ultimate Ranking ---
 df["Ultimate Ranking"] = df["Ultimate Score"].rank(method="min", ascending=False).astype(int)
 
-# --- App Title ---
-st.title("🎬 Noel's Movie Rankings Database")
+# --- Custom Title (tighter spacing) ---
+st.markdown("""
+    <h1 style='text-align: center; margin-bottom: 0.3rem;'>🎬 Noel's Movie Rankings Database</h1>
+""", unsafe_allow_html=True)
 
 # --- Sidebar Filters ---
 st.sidebar.header("Filters")
@@ -26,42 +28,33 @@ st.sidebar.header("Filters")
 if "page" not in st.session_state:
     st.session_state.page = "Results"
 
-# --- Page Switch Buttons (above search bar) ---
-
-# CSS styling (tighten spacing + large centered buttons)
+# --- CSS for buttons and layout ---
 st.markdown("""
     <style>
-    /* Reduce space below the title */
-    div[data-testid="stHeading"] {
-        margin-bottom: 0.3rem !important;
-        padding-bottom: 0rem !important;
-    }
-
     /* Layout container for the two buttons */
     .button-container {
         display: flex;
         justify-content: space-between;
         align-items: center;
         width: 100%;
-        margin-top: 0.3em;   /* small space above buttons */
+        margin-top: 0.2em;   /* tighter gap above */
         margin-bottom: 1.2em;
     }
 
-    /* Base button styles */
-    .left-button, .right-button {
-        flex: 0 0 42%;
-        height: 3.2em;
-        font-size: 1.1em;
-        font-weight: 600;
-        border-radius: 10px;
+    /* Button styles */
+    .stButton>button {
+        height: 3.2em !important;
+        font-size: 1.1em !important;
+        font-weight: 600 !important;
+        border-radius: 10px !important;
     }
 
-    /* Align Results and Stats inward */
-    .left-button {
+    /* Align Results (right inward) and Stats (left inward) */
+    .left-col {
         display: flex;
         justify-content: flex-end;
     }
-    .right-button {
+    .right-col {
         display: flex;
         justify-content: flex-start;
     }
@@ -72,13 +65,13 @@ st.markdown("""
 col_left, col_right = st.columns(2)
 
 with col_left:
-    st.markdown('<div class="left-button">', unsafe_allow_html=True)
-    results_clicked = st.button("📋 Results", key="results_btn", use_container_width=True)
+    st.markdown('<div class="left-col">', unsafe_allow_html=True)
+    results_clicked = st.button("📋 Results", key="results_btn", use_container_width=False)
     st.markdown('</div>', unsafe_allow_html=True)
 
 with col_right:
-    st.markdown('<div class="right-button">', unsafe_allow_html=True)
-    stats_clicked = st.button("📊 Stats", key="stats_btn", use_container_width=True)
+    st.markdown('<div class="right-col">', unsafe_allow_html=True)
+    stats_clicked = st.button("📊 Stats", key="stats_btn", use_container_width=False)
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Handle navigation ---
@@ -89,7 +82,6 @@ elif stats_clicked:
 
 # --- PAGE 1: RESULTS ---
 if st.session_state.page == "Results":
-    # Start with full dataframe
     filtered_df = df.copy()
 
     # --- Language Filter ---
@@ -102,7 +94,7 @@ if st.session_state.page == "Results":
     language_options = ["Select Language"] + unique_languages
     selected_language = st.sidebar.selectbox("🌍 Filter by Language", language_options)
 
-    # --- Genre Tag Filter ---
+    # --- Genre Filter ---
     all_genres = sorted(set(g.strip() for sublist in df["Genres"].dropna().str.split(",") for g in sublist))
     selected_genres = st.sidebar.multiselect("🎭 Filter by Genre(s)", all_genres)
 
@@ -131,16 +123,12 @@ if st.session_state.page == "Results":
     search_term = st.text_input("🔎 Search by Movie/TV Show Name").lower()
 
     # --- Apply Filters ---
-    filtered_df = df.copy()
-
     if search_term:
         filtered_df = filtered_df[filtered_df["Title"].str.lower().str.contains(search_term, na=False)]
 
     if selected_genres:
         filtered_df = filtered_df[
-            filtered_df["Genres"].apply(
-                lambda x: all(g in x for g in selected_genres if isinstance(x, str))
-            )
+            filtered_df["Genres"].apply(lambda x: all(g in x for g in selected_genres if isinstance(x, str)))
         ]
 
     if selected_language != "Select Language":
@@ -152,7 +140,6 @@ if st.session_state.page == "Results":
             if start is None:
                 return False
             return any(sel >= start and sel <= end for sel in selected)
-
         filtered_df = filtered_df[filtered_df["Year"].apply(lambda y: year_in_range(y, selected_years))]
 
     # --- Sorting ---
@@ -224,7 +211,3 @@ if st.session_state.page == "Results":
 elif st.session_state.page == "Stats":
     st.header("📊 Stats Page")
     st.info("This section will display movie statistics soon. Stay tuned!")
-
-
-
-
