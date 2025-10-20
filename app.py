@@ -224,7 +224,7 @@ languages = language_counts.index.tolist()
 counts = language_counts.values.tolist()
 total_movies = len(df)
 
-# --- Create bar chart ---
+# --- Create figure ---
 fig_lang = go.Figure()
 
 # Add bars
@@ -241,7 +241,7 @@ fig_lang.add_trace(
     )
 )
 
-# --- Style chart (dark bg, no grid, white labels) ---
+# --- Style (dark, clean, white text) ---
 fig_lang.update_layout(
     plot_bgcolor='rgba(0,0,0,0)',
     paper_bgcolor='rgba(0,0,0,0)',
@@ -265,33 +265,34 @@ fig_lang.update_layout(
     )
 )
 
-# --- Add circular number markers above bars ---
-circle_radius = max(counts) * 0.03  # proportional circle size
-
-for xi, yi in zip(languages, counts):
-    # Circle coordinates
+# --- Add circular markers (using numeric x positions) ---
+circle_radius = max(counts) * 0.03
+for i, (lang, count) in enumerate(zip(languages, counts)):
     fig_lang.add_shape(
         type="circle",
         xref="x", yref="y",
-        x0=xi - 0.3, x1=xi + 0.3,
-        y0=yi + circle_radius / 2, y1=yi + circle_radius * 2.5,
+        x0=i - 0.3, x1=i + 0.3,
+        y0=count + circle_radius / 2,
+        y1=count + circle_radius * 2.5,
         line_color="white",
-        fillcolor="white"
+        fillcolor="white",
+        xref="x domain",
+        yref="y"
     )
-    # Number annotation inside circle
     fig_lang.add_annotation(
-        x=xi,
-        y=yi + circle_radius * 1.6,
-        text=f"<b style='color:black'>{yi}</b>",
+        x=lang,
+        y=count + circle_radius * 1.6,
+        text=f"<b style='color:black'>{count}</b>",
         showarrow=False,
         font=dict(size=12, color='black')
     )
 
-# --- Add BIG total on the right side ---
+# --- Add big summary on the right side ---
 fig_lang.add_annotation(
-    x=1.12,  # right side outside plot area
+    x=1.12,
     y=0.5,
-    xref='paper', yref='paper',
+    xref='paper',
+    yref='paper',
     text=f"<b style='font-size:36px; color:white'>{total_movies}</b><br>"
          f"<span style='color:white; font-size:14px;'>Movies and Shows watched</span>",
     showarrow=False,
@@ -321,6 +322,7 @@ fig_genre.update_layout(
     margin=dict(l=20, r=20, t=40, b=20)
 )
 st.plotly_chart(fig_genre, use_container_width=True)
+
 
 
 
