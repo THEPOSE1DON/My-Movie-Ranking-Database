@@ -223,7 +223,54 @@ if st.session_state.page == "Results":
                         st.markdown(f"**💭 My Comment:** {row['Comment']}")
                 st.markdown("---")
 
+import plotly.express as px
+
 # --- PAGE 2: STATS ---
 elif st.session_state.page == "Stats":
-    st.header("📊 Stats Page")
-    st.info("This section will display movie statistics soon. Stay tuned!")
+    st.header("📊 Statistics")
+
+    st.info("Visual representation of movies by Language and Genre")
+
+    # --- Language Bar Graph ---
+    language_counts = df["Language"].dropna().str.split(",").explode().str.strip().value_counts()
+    language_counts = language_counts.sort_values(ascending=True)  # so largest on top for horizontal
+    fig_lang = px.bar(
+        language_counts,
+        x=language_counts.values,
+        y=language_counts.index,
+        orientation='h',
+        labels={'x':'Number of Movies/TV Shows', 'y':'Language'},
+        text=language_counts.values,
+        color=language_counts.values,
+        color_continuous_scale='Viridis'
+    )
+    fig_lang.update_layout(
+        title="Movies/TV Shows by Language",
+        showlegend=False,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=20, r=20, t=40, b=20)
+    )
+    st.plotly_chart(fig_lang, use_container_width=True)
+
+    # --- Genre Bar Graph ---
+    genre_counts = df["Genres"].dropna().str.split(",").explode().str.strip().value_counts()
+    genre_counts = genre_counts.sort_values(ascending=True)
+    fig_genre = px.bar(
+        genre_counts,
+        x=genre_counts.values,
+        y=genre_counts.index,
+        orientation='h',
+        labels={'x':'Number of Movies/TV Shows', 'y':'Genre'},
+        text=genre_counts.values,
+        color=genre_counts.values,
+        color_continuous_scale='Cividis'
+    )
+    fig_genre.update_layout(
+        title="Movies/TV Shows by Genre",
+        showlegend=False,
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=20, r=20, t=40, b=20)
+    )
+    st.plotly_chart(fig_genre, use_container_width=True)
