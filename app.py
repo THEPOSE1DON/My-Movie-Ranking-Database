@@ -1,3 +1,8 @@
+import sys
+import streamlit as st
+
+st.write("Python executable:", sys.executable)
+
 import streamlit as st
 import pandas as pd
 import re
@@ -252,3 +257,4 @@ if st.session_state.page == "Stats":
         margin=dict(l=20, r=20, t=40, b=20)
     )
     st.plotly_chart(fig_genre, use_container_width=True)
+
