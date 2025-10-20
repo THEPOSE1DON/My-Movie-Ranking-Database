@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import re
 import plotly.express as px
+import plotly.graph_objects as go
 
 # --- Page Config (wide mode) ---
 st.set_page_config(layout="wide")
@@ -210,6 +211,7 @@ if st.session_state.page == "Stats":
     st.info("Visual representation of movies by Language and Genre")
 
   # --- Language Bar Graph ---
+# --- Prepare data ---
 language_counts = (
     df["Language"]
     .dropna()
@@ -217,34 +219,61 @@ language_counts = (
     .explode()
     .str.strip()
     .value_counts()
-    .sort_values(ascending=False)
 )
 
-# Create vertical bar chart
-fig_lang = px.bar(
-    x=language_counts.index,
-    y=language_counts.values,
-    text=language_counts.values,
-    labels={'x':'Language', 'y':'Number of Movies/TV Shows'},
-    color=language_counts.values,
-    color_continuous_scale='Viridis'
+languages = language_counts.index.tolist()
+counts = language_counts.values.tolist()
+total_movies = len(df)
+
+# --- Create figure ---
+fig_lang = go.Figure()
+
+# Add bars
+fig_lang.add_trace(
+    go.Bar(
+        x=languages,
+        y=counts,
+        text=counts,  # text will be replaced by circles
+        textposition='none',  # we will add custom circle annotations
+        marker_color=counts,
+        marker_colorscale='Viridis',
+        marker_line_width=0
+    )
 )
 
-# Update layout to match the style of your example
-fig_lang.update_traces(
-    texttemplate='%{text}', textposition='outside', marker_line_width=0
-)
+# --- Remove background grid lines ---
 fig_lang.update_layout(
-    title_text="Movies/TV Shows by Language",
-    title_x=0.5,
-    xaxis_title='Language',
-    yaxis_title='Number of Movies/TV Shows',
-    plot_bgcolor='white',
-    paper_bgcolor='white',
-    uniformtext_minsize=10,
-    uniformtext_mode='hide',
-    margin=dict(l=20, r=20, t=40, b=20),
-    coloraxis_showscale=False
+    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor='rgba(0,0,0,0)',
+    xaxis=dict(showgrid=False, showline=False, tickangle=-45),
+    yaxis=dict(showgrid=False, showline=False, showticklabels=False),
+    margin=dict(l=20, r=100, t=40, b=60),  # extra space on right for big number
+    title=dict(
+        text="Movies/TV Shows by Language",
+        x=0.5,
+        xanchor='center'
+    ),
+)
+
+# --- Add numbers on top of bars in circles ---
+for xi, yi in zip(languages, counts):
+    fig_lang.add_annotation(
+        x=xi,
+        y=yi + 0.5,  # slightly above bar
+        text=f"<span style='display:inline-block; border-radius:50%; background:#fff; padding:5px 10px;'>{yi}</span>",
+        showarrow=False,
+        font=dict(color='black', size=12),
+        align='center'
+    )
+
+# --- Add BIG total number on the right ---
+fig_lang.add_annotation(
+    x=len(languages) - 0.5,  # position roughly at the right side
+    y=max(counts)/2,          # vertically centered
+    xref='paper', yref='paper',
+    text=f"<b style='font-size:32px'>{total_movies}</b><br>Movies and Shows watched",
+    showarrow=False,
+    align='center'
 )
 
 st.plotly_chart(fig_lang, use_container_width=True)
@@ -270,4 +299,5 @@ fig_genre.update_layout(
     margin=dict(l=20, r=20, t=40, b=20)
 )
 st.plotly_chart(fig_genre, use_container_width=True)
+
 
