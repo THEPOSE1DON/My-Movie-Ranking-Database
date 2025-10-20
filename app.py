@@ -211,94 +211,60 @@ if st.session_state.page == "Stats":
     st.info("Visual representation of movies by Language and Genre")
 
   # --- Language Bar Graph ---
-# --- Prepare data ---
-language_counts = (
-    df["Language"]
-    .dropna()
-    .str.split(",")
-    .explode()
-    .str.strip()
-    .value_counts()
-)
-languages = language_counts.index.tolist()
-counts = language_counts.values.tolist()
-total_movies = len(df)
+# Data prep
+language_counts = df['Language'].value_counts().reset_index()
+language_counts.columns = ['Language', 'Count']
 
-# --- Create figure ---
+# Total number for the right-side text
+total_movies = language_counts['Count'].sum()
+
+# Create bar chart
 fig_lang = go.Figure()
 
-# Add bars
-fig_lang.add_trace(
-    go.Bar(
-        x=languages,
-        y=counts,
-        marker=dict(
-            color=counts,
-            colorscale='Viridis',
-            line=dict(width=0)
-        ),
-        text=None
-    )
-)
+fig_lang.add_trace(go.Bar(
+    x=language_counts['Language'],
+    y=language_counts['Count'],
+    marker_color="#3b3b3b",  # same tone as genre background
+    text=language_counts['Count'],
+    textposition='outside',
+    textfont=dict(color="white", size=14, family="Arial Black"),
+))
 
-# --- Style (dark, clean, white text) ---
+# Layout adjustments
 fig_lang.update_layout(
-    plot_bgcolor='rgba(0,0,0,0)',
-    paper_bgcolor='rgba(0,0,0,0)',
+    title=dict(
+        text="<b>Movies and Shows by Language</b>",
+        font=dict(size=22, color="white"),
+        x=0.05,
+    ),
+    plot_bgcolor="#1e1e1e",  # match genre background
+    paper_bgcolor="#1e1e1e",
     xaxis=dict(
+        title="",
+        tickfont=dict(color="white"),
         showgrid=False,
-        showline=False,
-        tickangle=-45,
-        tickfont=dict(color='white')
+        zeroline=False
     ),
     yaxis=dict(
+        title="",
+        tickfont=dict(color="white"),
         showgrid=False,
-        showline=False,
-        showticklabels=False
+        zeroline=False
     ),
-    margin=dict(l=20, r=180, t=60, b=60),
-    title=dict(
-        text="Movies/TV Shows by Language",
-        x=0.5,
-        xanchor='center',
-        font=dict(color='white', size=22)
-    )
+    margin=dict(l=60, r=200, t=80, b=60),  # leave space on the right
 )
 
-# --- Add circular markers (using numeric x positions) ---
-circle_radius = max(counts) * 0.03
-for i, (lang, count) in enumerate(zip(languages, counts)):
-    fig_lang.add_shape(
-        type="circle",
-        xref="x domain",  # ✅ keep only one xref
-        yref="y",
-        x0=i / len(languages) - 0.015,
-        x1=i / len(languages) + 0.015,
-        y0=count + circle_radius / 2,
-        y1=count + circle_radius * 2.5,
-        line_color="white",
-        fillcolor="white"
-    )
-    fig_lang.add_annotation(
-        x=lang,
-        y=count + circle_radius * 1.6,
-        text=f"<b style='color:black'>{count}</b>",
-        showarrow=False,
-        font=dict(size=12, color='black')
-    )
-
-# --- Add big summary on the right side ---
+# Add big total number + subtitle on the right
 fig_lang.add_annotation(
-    x=1.12,
-    y=0.5,
-    xref='paper',
-    yref='paper',
-    text=f"<b style='font-size:36px; color:white'>{total_movies}</b><br>"
-         f"<span style='color:white; font-size:14px;'>Movies and Shows watched</span>",
+    text=f"<b>{total_movies}</b><br><span style='font-size:14px;'>Movies and Shows watched</span>",
+    xref="paper", yref="paper",
+    x=1.12, y=0.5,
     showarrow=False,
-    align='center'
+    font=dict(color="white", size=36, family="Arial Black"),
+    align="center"
 )
 
+# Show figure in Streamlit
 st.plotly_chart(fig_lang, use_container_width=True)
 
     # --- Genre Bar Graph ---
@@ -322,6 +288,7 @@ fig_genre.update_layout(
     margin=dict(l=20, r=20, t=40, b=20)
 )
 st.plotly_chart(fig_genre, use_container_width=True)
+
 
 
 
