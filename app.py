@@ -20,16 +20,55 @@ df["Ultimate Ranking"] = df["Ultimate Score"].rank(method="min", ascending=False
 if "page" not in st.session_state:
     st.session_state.page = "Results"
 
-# --- Navigation buttons ---
+# --- Page Heading ---
 st.markdown("<h1 style='text-align: center;'>🎬 Noel's Movie Rankings Database</h1>", unsafe_allow_html=True)
+
+# --- Navigation buttons ---
+st.markdown("""
+<style>
+.stButton>button {
+    height: 3em !important; 
+    width: 80%; 
+    font-size: 1em !important; 
+    font-weight: 600 !important;
+    border-radius: 10px !important; 
+    background-color: #f0f0f0; 
+    color: black;
+    transition: all 0.2s ease; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.active-button>button { 
+    background-color: #4CAF50 !important; 
+    color: white !important; 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+}
+.stButton>button:hover { 
+    background-color: #d1d1d1; 
+    transform: translateY(-2px); 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+.active-button>button:hover { 
+    background-color: #45a049 !important; 
+    transform: translateY(-2px); 
+    box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+}
+.left-col {display:flex; justify-content:flex-end;}
+.right-col {display:flex; justify-content:flex-start;}
+</style>
+""", unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 with col1:
+    st.markdown(f'<div class="left-col {"active-button" if st.session_state.page=="Results" else ""}">', unsafe_allow_html=True)
     if st.button("📋 Results", key="results_btn"):
         st.session_state.page = "Results"
+    st.markdown('</div>', unsafe_allow_html=True)
+
 with col2:
+    st.markdown(f'<div class="right-col {"active-button" if st.session_state.page=="Stats" else ""}">', unsafe_allow_html=True)
     if st.button("📊 Stats", key="stats_btn"):
         st.session_state.page = "Stats"
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # --- Helper function ---
 def parse_year_range(year_str):
@@ -185,5 +224,6 @@ if st.session_state.page == "Stats":
                            xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
                            yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
     st.plotly_chart(fig_year, use_container_width=True)
+
 
 
