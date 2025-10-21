@@ -283,33 +283,61 @@ fig_lang.add_annotation(
 
 st.plotly_chart(fig_lang, use_container_width=True)
 
-    # --- Genre Bar Graph ---
-genre_counts = df["Genres"].dropna().str.split(",").explode().str.strip().value_counts()
-genre_counts = genre_counts.sort_values(ascending=True)
+# --- Genre Bar Graph ---
+genre_counts = (
+    df["Genres"]
+    .dropna()
+    .str.split(",")
+    .explode()
+    .str.strip()
+    .value_counts()
+    .sort_values(ascending=True)
+)
+
+import plotly.express as px
+
+# Dynamically adjust figure height based on number of genres
+fig_height = max(400, len(genre_counts) * 30)
+
 fig_genre = px.bar(
     genre_counts,
     x=genre_counts.values,
     y=genre_counts.index,
     orientation='h',
-    labels={'x':'Number of Movies/TV Shows', 'y':'Genre'},
+    labels={'x': 'Number of Movies/TV Shows', 'y': 'Genre'},
     text=genre_counts.values,
     color=genre_counts.values,
     color_continuous_scale='Cividis'
 )
+
 fig_genre.update_layout(
-    title="Movies/TV Shows by Genre",
+    title=dict(
+        text="Movies/TV Shows by Genre",
+        x=0.5,
+        xanchor='center',
+        font=dict(color='white', size=22)
+    ),
     showlegend=False,
     plot_bgcolor='rgba(0,0,0,0)',
     paper_bgcolor='rgba(0,0,0,0)',
-    margin=dict(l=20, r=20, t=40, b=20)
+    margin=dict(l=120, r=40, t=60, b=40),
+    height=fig_height,
+    xaxis=dict(
+        showgrid=False,
+        showline=False,
+        tickfont=dict(color='white')
+    ),
+    yaxis=dict(
+        showgrid=False,
+        showline=False,
+        tickfont=dict(color='white')
+    ),
 )
+
+# White text labels on bars
+fig_genre.update_traces(
+    textfont=dict(color='white', size=12),
+    textposition='outside'
+)
+
 st.plotly_chart(fig_genre, use_container_width=True)
-
-
-
-
-
-
-
-
-
