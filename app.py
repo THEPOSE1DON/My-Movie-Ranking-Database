@@ -45,9 +45,6 @@ st.markdown("""
     <h1 style='text-align: center; margin-bottom: 0.3rem;'>🎬 Noel's Movie Rankings Database</h1>
 """, unsafe_allow_html=True)
 
-# --- Sidebar Filters ---
-st.sidebar.header("Filters")
-
 # --- Initialize Page State ---
 if "page" not in st.session_state:
     st.session_state.page = "Results"
@@ -438,7 +435,3 @@ fig_year.update_layout(
 
 # --- Display chart in Streamlit ---
 st.plotly_chart(fig_year, use_container_width=True)
-
-
-
-
