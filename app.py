@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 # --- Page Config (wide mode) ---
 st.set_page_config(layout="wide")
 
-# --- Hide default Streamlit sidebar ---
+# --- Hide default Streamlit sidebar completely ---
 st.markdown(
     """
     <style>
@@ -348,3 +348,4 @@ fig_year.update_layout(
     margin=dict(l=40, r=40, t=60, b=80)
 )
 st.plotly_chart(fig_year, use_container_width=True)
+
