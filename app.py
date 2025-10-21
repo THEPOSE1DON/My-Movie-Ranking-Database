@@ -220,6 +220,7 @@ st.markdown(
     </div>
     """,
     unsafe_allow_html=True
+)
 
 # --- Language Bar Graph ---
 # --- Prepare data ---
@@ -359,5 +360,6 @@ fig_genre.update_traces(
 )
 
 st.plotly_chart(fig_genre, use_container_width=True)
+
 
 
