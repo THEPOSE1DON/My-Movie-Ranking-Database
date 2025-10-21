@@ -86,6 +86,9 @@ def parse_year_range(year_str):
 if st.session_state.page == "Results":
     st.sidebar.header("Filters & Search")
 
+    # --- Search ---
+    search_term = st.sidebar.text_input("🔎 Search by Title")
+
     # --- Languages ---
     all_languages = df["Language"].dropna().apply(lambda x: [lang.strip() for lang in str(x).split(",")]).sum()
     unique_languages = sorted(set(all_languages))
@@ -104,9 +107,6 @@ if st.session_state.page == "Results":
             all_years.append(start)
     unique_years = sorted(set(all_years))
     selected_years = st.sidebar.multiselect("📅 Year(s)", unique_years)
-
-    # --- Search ---
-    search_term = st.sidebar.text_input("🔎 Search by Title")
 
     # --- Sort ---
     genre_columns = [col for col in df.columns if "Score" in col]
@@ -225,6 +225,7 @@ if st.session_state.page == "Stats":
                            xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
                            yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
     st.plotly_chart(fig_year, use_container_width=True)
+
 
 
 
