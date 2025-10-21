@@ -6,6 +6,28 @@ import plotly.graph_objects as go
 
 # --- Page Config (wide mode) ---
 st.set_page_config(layout="wide")
+# --- Hide default Streamlit sidebar ---
+st.markdown(
+    """
+    <style>
+    /* Hide the default sidebar */
+    .css-1d391kg {display:none;}
+    .css-1v3fvcr {padding-left: 0px !important;}  /* remove sidebar padding on main content */
+
+    /* Make the main content full width */
+    .appview-container .main .block-container {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+
+    /* Optional: adjust spacing for horizontal filters */
+    .stSelectbox, .stMultiselect, .stRadio {
+        margin-bottom: 0.5rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # --- Load Google Sheet ---
 csv_url = "https://docs.google.com/spreadsheets/d/1sO1ly233qkEqw4_bKr4s_WZwK0uAF6StDMi8pR4ZTxs/export?format=csv&gid=1030199938"
@@ -416,6 +438,7 @@ fig_year.update_layout(
 
 # --- Display chart in Streamlit ---
 st.plotly_chart(fig_year, use_container_width=True)
+
 
 
 
