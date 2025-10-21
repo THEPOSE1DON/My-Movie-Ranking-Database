@@ -241,7 +241,6 @@ language_counts = (
 
 languages = language_counts.index.tolist()
 counts = language_counts.values.tolist()
-total_movies = len(df)
 
 # --- Create figure ---
 fig_lang = go.Figure()
@@ -360,6 +359,7 @@ fig_genre.update_traces(
 )
 
 st.plotly_chart(fig_genre, use_container_width=True)
+
 
 
 
