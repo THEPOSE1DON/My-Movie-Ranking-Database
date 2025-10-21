@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 st.set_page_config(layout="wide", page_title="Noel's Movie Rankings")
 
 # --- Load Google Sheet ---
-csv_url = "https://docs.google.com/spreadsheets/d/1sO1ly233qkEqw4_bKr4s_WZwK0uAF6StDMi8pR4ZTxs/export?format=csv&gid=1030199938"
+csv_url = "https://docs.google.com/spreadsheets/d/1sO1ly233qkEqw4_bKr4s_WZwK0uAF6StDMi8pR4ZTxs/export?format=csv&gid="
 df = pd.read_csv(csv_url, quotechar='"', engine='python')
 
 # --- Clean columns ---
@@ -185,3 +185,4 @@ if st.session_state.page == "Stats":
                            xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
                            yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
     st.plotly_chart(fig_year, use_container_width=True)
+
