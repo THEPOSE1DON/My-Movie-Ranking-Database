@@ -371,7 +371,7 @@ fig_year = px.line(
     y=counts,
     markers=True,
     labels={'x': 'Year', 'y': 'Number of Movies/TV Shows'},
-    title='Movies/TV Shows Released per Year'
+    title='Movies/TV Shows by Year'
 )
 
 # --- Style chart ---
@@ -384,9 +384,10 @@ fig_year.update_layout(
         showline=True,
         linecolor='white',
         tickfont=dict(color='white'),
-        dtick=1,  # keep spacing consistent
+        dtick=1,
         tickvals=years,  # only show years with data
-        ticktext=[str(y) for y in years]  # ensure labels match
+        ticktext=[str(y) for y in years],  # ensure labels match
+        tickangle=90  # rotate labels vertically
     ),
     yaxis=dict(
         showgrid=False,
@@ -395,8 +396,9 @@ fig_year.update_layout(
         tickfont=dict(color='white')
     ),
     title=dict(font=dict(color='white', size=22)),
-    margin=dict(l=40, r=40, t=60, b=40)
+    margin=dict(l=40, r=40, t=60, b=80)  # add extra bottom margin for vertical labels
 )
 
 # --- Display chart in Streamlit ---
 st.plotly_chart(fig_year, use_container_width=True)
+
