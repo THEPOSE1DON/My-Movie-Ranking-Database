@@ -209,7 +209,17 @@ if st.session_state.page == "Results":
 # --- PAGE 2: STATS ---
 if st.session_state.page == "Stats":
     st.header("📊 Statistics")
-    st.info("Visual representation of movies by Language and Genre")
+
+# --- Total movies and shows watched ---
+total_movies = len(df)
+st.markdown(
+    f"""
+    <div style='text-align: center; margin-top: 10px; margin-bottom: 40px;'>
+        <span style='font-size: 60px; font-weight: bold; color: white;'>{total_movies}</span><br>
+        <span style='font-size: 20px; color: white;'>Movies and Shows watched</span>
+    </div>
+    """,
+    unsafe_allow_html=True
 
 # --- Language Bar Graph ---
 # --- Prepare data ---
@@ -288,6 +298,7 @@ fig_lang.add_annotation(
     align='center'
 )
 
+# Center align the graph
 st.plotly_chart(fig_lang, use_container_width=True)
 
 # --- Genre Bar Graph ---
@@ -348,4 +359,5 @@ fig_genre.update_traces(
 )
 
 st.plotly_chart(fig_genre, use_container_width=True)
+
 
