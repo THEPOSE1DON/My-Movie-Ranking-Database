@@ -3,19 +3,9 @@ import pandas as pd
 import re
 import plotly.express as px
 import plotly.graph_objects as go
-from streamlit_js_eval import streamlit_js_eval
 
 # --- Page Config ---
-st.set_page_config(layout="wide")
-
-# --- Hide default sidebar ---
-st.markdown("""
-<style>
-/* Hide the sidebar completely */
-.css-1d391kg {display:none;}
-.css-1v3fvcr {padding-left:0px !important;}
-</style>
-""", unsafe_allow_html=True)
+st.set_page_config(layout="wide", page_title="Noel's Movie Rankings")
 
 # --- Load Google Sheet ---
 csv_url = "https://docs.google.com/spreadsheets/d/1sO1ly233qkEqw4_bKr4s_WZwK0uAF6StDMi8pR4ZTxs/export?format=csv&gid=1030199938"
@@ -26,42 +16,22 @@ df.columns = df.columns.str.strip()
 df.rename(columns={"Movie/TV Show Name": "Title"}, inplace=True)
 df["Ultimate Ranking"] = df["Ultimate Score"].rank(method="min", ascending=False).astype(int)
 
-# --- Page title ---
-st.markdown("<h1 style='text-align: center;'>🎬 Noel's Movie Rankings Database</h1>", unsafe_allow_html=True)
-
 # --- Page state ---
 if "page" not in st.session_state:
     st.session_state.page = "Results"
 
 # --- Navigation buttons ---
-st.markdown("""
-<style>
-.stButton>button {
-    height: 3em !important; width: 80%; font-size: 1em !important; font-weight: 600 !important;
-    border-radius: 10px !important; background-color: #f0f0f0; color: black;
-    transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-.active-button>button { background-color: #4CAF50 !important; color: white !important; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-.stButton>button:hover { background-color: #d1d1d1; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15);}
-.active-button>button:hover { background-color: #45a049 !important; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.25);}
-.left-col {display:flex; justify-content:flex-end;}
-.right-col {display:flex; justify-content:flex-start;}
-</style>
-""", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>🎬 Noel's Movie Rankings Database</h1>", unsafe_allow_html=True)
 
 col1, col2 = st.columns(2)
 with col1:
-    st.markdown(f'<div class="left-col {"active-button" if st.session_state.page=="Results" else ""}">', unsafe_allow_html=True)
     if st.button("📋 Results", key="results_btn"):
         st.session_state.page = "Results"
-    st.markdown('</div>', unsafe_allow_html=True)
 with col2:
-    st.markdown(f'<div class="right-col {"active-button" if st.session_state.page=="Stats" else ""}">', unsafe_allow_html=True)
     if st.button("📊 Stats", key="stats_btn"):
         st.session_state.page = "Stats"
-    st.markdown('</div>', unsafe_allow_html=True)
 
-# --- Helper functions ---
+# --- Helper function ---
 def parse_year_range(year_str):
     if pd.isna(year_str):
         return None, None
@@ -72,91 +42,56 @@ def parse_year_range(year_str):
         return start, end
     return None, None
 
-# --- PAGE: RESULTS ---
+# --- Sidebar Filters ---
 if st.session_state.page == "Results":
-    filtered_df = df.copy()
+    st.sidebar.header("Filters & Search")
 
-    # --- Filters options ---
+    # --- Languages ---
     all_languages = df["Language"].dropna().apply(lambda x: [lang.strip() for lang in str(x).split(",")]).sum()
     unique_languages = sorted(set(all_languages))
-    language_options = ["Select Language"] + unique_languages
+    language_options = ["All"] + unique_languages
+    selected_language = st.sidebar.selectbox("🌍 Language", language_options)
 
+    # --- Genres ---
     all_genres = sorted(set(g.strip() for sublist in df["Genres"].dropna().str.split(",") for g in sublist))
+    selected_genres = st.sidebar.multiselect("🎭 Genre(s)", all_genres)
 
+    # --- Years ---
     all_years = []
     for y in df["Year"].dropna():
         start, _ = parse_year_range(y)
-        if start: all_years.append(start)
+        if start:
+            all_years.append(start)
     unique_years = sorted(set(all_years))
+    selected_years = st.sidebar.multiselect("📅 Year(s)", unique_years)
 
+    # --- Search ---
+    search_term = st.sidebar.text_input("🔎 Search by Title")
+
+    # --- Sort ---
     genre_columns = [col for col in df.columns if "Score" in col]
     sort_options = {"Ultimate Score": "Ultimate Score", "General Score": "General Score", "Last Watched": "Timestamp"}
-    for g in genre_columns: sort_options[g] = g
+    for g in genre_columns:
+        sort_options[g] = g
     default_sort_display = "Ultimate Score"
-
-   # --- Sticky search bar and filters CSS ---
-st.markdown("""
-<style>
-.sticky-container {
-    position: sticky;
-    top: 0;
-    width: 100%;
-    background-color: #111;
-    padding: 10px;
-    z-index: 999;
-    border-bottom: 1px solid #444;
-}
-.sticky-container .stTextInput, 
-.sticky-container .stSelectbox, 
-.sticky-container .stMultiselect, 
-.sticky-container .stRadio {
-    margin-bottom: 5px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# --- Sticky search + filters container ---
-with st.container():
-    st.markdown('<div class="sticky-container">', unsafe_allow_html=True)
-
-    # --- Live search ---
-    search_term = streamlit_js_eval(
-        js_code="""
-        const input = window.document.querySelector('input');
-        if (input) {
-            input.addEventListener('input', e => { window.streamlitSetComponentValue(e.target.value); });
-            return input.value;
-        }
-        return '';
-        """,
-        key="search_input"
-    )
-    st.text_input("🔎 Search by Movie/TV Show Name", value=search_term, key="search_input", placeholder="Type to search…")
-
-    # --- Horizontal filters ---
-    row1 = st.columns([1,1,1])
-    row2 = st.columns([1,1])
-    with row1[0]:
-        selected_language = st.selectbox("🌍 Language", language_options)
-    with row1[1]:
-        selected_genres = st.multiselect("🎭 Genre(s)", all_genres)
-    with row1[2]:
-        selected_years = st.multiselect("📅 Year(s)", unique_years)
-    with row2[0]:
-        sort_choice_display = st.selectbox("📌 Sort by", list(sort_options.keys()), index=list(sort_options.keys()).index(default_sort_display))
-    with row2[1]:
-        sort_order = st.radio("Order", ["Descending","Ascending"], horizontal=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    sort_choice_display = st.sidebar.selectbox("📌 Sort by", list(sort_options.keys()), index=list(sort_options.keys()).index(default_sort_display))
+    sort_order = st.sidebar.radio("Order", ["Descending", "Ascending"], index=0)
 
     sort_choice = sort_options[sort_choice_display]
-    ascending = sort_order=="Ascending"
+    ascending = sort_order == "Ascending"
 
     # --- Apply filters ---
+    filtered_df = df.copy()
+
+    if search_term:
+        filtered_df = filtered_df[filtered_df["Title"].str.contains(search_term, case=False, na=False)]
+
     if selected_genres:
         filtered_df = filtered_df[filtered_df["Genres"].apply(lambda x: all(g in x for g in selected_genres if isinstance(x,str)))]
-    if selected_language != "Select Language":
+
+    if selected_language != "All":
         filtered_df = filtered_df[filtered_df["Language"].str.contains(selected_language, na=False)]
+
     if selected_years:
         def year_in_range(row_year, selected):
             start, end = parse_year_range(row_year)
@@ -174,10 +109,10 @@ with st.container():
     if filtered_df.empty:
         st.warning("No movies found with the current filters/search.")
     else:
-        _, main, _ = st.columns([1,3,1])
+        _, main, _ = st.columns([1, 3, 1])
         with main:
             for i, (_, row) in enumerate(filtered_df.iterrows(), start=1):
-                c1, c2 = st.columns([1,2])
+                c1, c2 = st.columns([1, 2])
                 with c1:
                     if isinstance(row["Poster"], str) and row["Poster"].startswith("http"):
                         st.image(row["Poster"], width=200)
@@ -203,27 +138,37 @@ with st.container():
                 st.markdown("---")
 
 # --- PAGE: STATS ---
-if st.session_state.page=="Stats":
+if st.session_state.page == "Stats":
     st.header("📊 Statistics")
     total_movies = len(df)
     st.markdown(f"<div style='text-align:center;'><span style='font-size:60px; font-weight:bold; color:white'>{total_movies}</span><br><span style='font-size:20px; color:white'>Movies and Shows watched</span></div>", unsafe_allow_html=True)
 
-    # --- Language bar ---
+    # Language bar graph
     lang_counts = df["Language"].dropna().str.split(",").explode().str.strip().value_counts()
     lang_counts = lang_counts.sort_index(ascending=True).sort_values(ascending=False, kind="mergesort")
-    fig_lang = go.Figure(go.Bar(x=lang_counts.index, y=lang_counts.values, text=lang_counts.values, textposition='outside', textfont=dict(color='white', size=12), marker=dict(color=lang_counts.values, colorscale='Viridis', line=dict(width=0))))
-    fig_lang.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', xaxis=dict(showgrid=False, tickangle=-45, tickfont=dict(color='white')), yaxis=dict(showgrid=False, showticklabels=False), title=dict(text="Movies/TV Shows by Language", x=0.5, font=dict(color='white', size=22)))
+    fig_lang = go.Figure(go.Bar(x=lang_counts.index, y=lang_counts.values, text=lang_counts.values,
+                                textposition='outside', textfont=dict(color='white', size=12),
+                                marker=dict(color=lang_counts.values, colorscale='Viridis', line=dict(width=0))))
+    fig_lang.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                           xaxis=dict(showgrid=False, tickangle=-45, tickfont=dict(color='white')),
+                           yaxis=dict(showgrid=False, showticklabels=False),
+                           title=dict(text="Movies/TV Shows by Language", x=0.5, font=dict(color='white', size=22)))
     st.plotly_chart(fig_lang, use_container_width=True)
 
-    # --- Genre bar ---
+    # Genre bar graph
     genre_counts = df["Genres"].dropna().str.split(",").explode().str.strip().value_counts().sort_values(ascending=True)
     fig_height = max(400, len(genre_counts)*30)
-    fig_genre = px.bar(genre_counts, x=genre_counts.values, y=genre_counts.index, orientation='h', text=genre_counts.values, color=genre_counts.values, color_continuous_scale='Cividis')
-    fig_genre.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', showlegend=False, margin=dict(l=120,r=40,t=60,b=40), height=fig_height, title=dict(text="Movies/TV Shows by Genre", x=0.5, font=dict(color='white', size=22)), xaxis=dict(showgrid=False, showline=False, tickfont=dict(color='white')), yaxis=dict(showgrid=False, showline=False, tickfont=dict(color='white')))
+    fig_genre = px.bar(genre_counts, x=genre_counts.values, y=genre_counts.index, orientation='h',
+                       text=genre_counts.values, color=genre_counts.values, color_continuous_scale='Cividis')
+    fig_genre.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                            showlegend=False, margin=dict(l=120,r=40,t=60,b=40), height=fig_height,
+                            title=dict(text="Movies/TV Shows by Genre", x=0.5, font=dict(color='white', size=22)),
+                            xaxis=dict(showgrid=False, showline=False, tickfont=dict(color='white')),
+                            yaxis=dict(showgrid=False, showline=False, tickfont=dict(color='white')))
     fig_genre.update_traces(textposition='outside', textfont=dict(color='white', size=12))
     st.plotly_chart(fig_genre, use_container_width=True)
 
-    # --- Year line graph ---
+    # Year line graph
     def extract_first_year(y):
         if pd.isna(y): return None
         match = re.match(r"^\s*(\d{4})", str(y))
@@ -231,9 +176,12 @@ if st.session_state.page=="Stats":
 
     df['First Year'] = df['Year'].apply(extract_first_year)
     movies_per_year = df['First Year'].value_counts().sort_index()
-    fig_year = px.line(x=movies_per_year.index, y=movies_per_year.values, markers=True, labels={'x':'Year','y':'Number of Movies/TV Shows'})
+    fig_year = px.line(x=movies_per_year.index, y=movies_per_year.values, markers=True,
+                       labels={'x':'Year','y':'Number of Movies/TV Shows'})
     fig_year.update_traces(line=dict(color='cyan', width=3), marker=dict(size=8, color='cyan'))
-    fig_year.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', title=dict(text="Movies/TV Shows by Year", x=0.5, font=dict(color='white', size=22)), margin=dict(l=40,r=40,t=60,b=80), xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')), yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
+    fig_year.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                           title=dict(text="Movies/TV Shows by Year", x=0.5, font=dict(color='white', size=22)),
+                           margin=dict(l=40,r=40,t=60,b=80),
+                           xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
+                           yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
     st.plotly_chart(fig_year, use_container_width=True)
-
-
