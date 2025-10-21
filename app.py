@@ -370,13 +370,8 @@ fig_year = px.line(
     x=years,
     y=counts,
     markers=True,
-    labels={'x': 'Year', 'y': 'Number of Movies/TV Shows'},
-    title=dict(
-        text="Movies/TV Shows by Year",
-        x=0.5,
-        xanchor='center',
-        font=dict(color='white', size=22)
-))
+    labels={'x': 'Year', 'y': 'Number of Movies/TV Shows'}
+)
 
 # --- Style chart ---
 fig_year.update_traces(line=dict(color='cyan', width=3), marker=dict(size=8, color='cyan'))
@@ -399,12 +394,15 @@ fig_year.update_layout(
         linecolor='white',
         tickfont=dict(color='white')
     ),
-    title=dict(font=dict(color='white', size=22)),
-    margin=dict(l=40, r=40, t=60, b=80)  # add extra bottom margin for vertical labels
+    title=dict(
+        text="Movies/TV Shows by Year",
+        x=0.5,
+        xanchor='center',
+        font=dict(color='white', size=22)
+    ),
+    margin=dict(l=40, r=40, t=60, b=80)  # extra bottom margin for vertical labels
 )
 
 # --- Display chart in Streamlit ---
 st.plotly_chart(fig_year, use_container_width=True)
-
-
 
