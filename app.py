@@ -277,7 +277,7 @@ fig_lang.update_layout(
         showline=False,
         showticklabels=False
     ),
-    margin=dict(l=20, r=180, t=60, b=60),
+    margin=dict(l=80, r=80, t=60, b=60),  # <-- balanced margins to center graph
     title=dict(
         text="Movies/TV Shows by Language",
         x=0.5,
@@ -347,6 +347,7 @@ fig_genre.update_traces(
 )
 
 st.plotly_chart(fig_genre, use_container_width=True)
+
 
 
 
