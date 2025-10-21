@@ -384,7 +384,9 @@ fig_year.update_layout(
         showline=True,
         linecolor='white',
         tickfont=dict(color='white'),
-        dtick=1  # ensures evenly spaced ticks
+        dtick=1,  # keep spacing consistent
+        tickvals=years,  # only show years with data
+        ticktext=[str(y) for y in years]  # ensure labels match
     ),
     yaxis=dict(
         showgrid=False,
