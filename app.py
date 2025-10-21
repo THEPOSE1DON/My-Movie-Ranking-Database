@@ -371,7 +371,11 @@ fig_year = px.line(
     y=counts,
     markers=True,
     labels={'x': 'Year', 'y': 'Number of Movies/TV Shows'},
-    title='Movies/TV Shows by Year'
+    title=dict(
+        text="Movies/TV Shows by Year",
+        x=0.5,
+        xanchor='center',
+        font=dict(color='white', size=22)
 )
 
 # --- Style chart ---
@@ -401,4 +405,5 @@ fig_year.update_layout(
 
 # --- Display chart in Streamlit ---
 st.plotly_chart(fig_year, use_container_width=True)
+
 
