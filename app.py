@@ -211,7 +211,7 @@ if st.session_state.page == "Stats":
     st.header("📊 Statistics")
     st.info("Visual representation of movies by Language and Genre")
 
-  # --- Language Bar Graph ---
+# --- Language Bar Graph ---
 # --- Prepare data ---
 language_counts = (
     df["Language"]
@@ -221,6 +221,13 @@ language_counts = (
     .str.strip()
     .value_counts()
 )
+
+# Sort by count (descending), then alphabetically for ties
+language_counts = (
+    language_counts.sort_index(ascending=True)  # alphabetical first
+    .sort_values(ascending=False, kind="mergesort")  # then by count, stable sort
+)
+
 languages = language_counts.index.tolist()
 counts = language_counts.values.tolist()
 total_movies = len(df)
@@ -341,3 +348,4 @@ fig_genre.update_traces(
 )
 
 st.plotly_chart(fig_genre, use_container_width=True)
+
