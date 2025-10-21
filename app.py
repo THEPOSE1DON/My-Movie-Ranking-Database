@@ -435,3 +435,4 @@ fig_year.update_layout(
 
 # --- Display chart in Streamlit ---
 st.plotly_chart(fig_year, use_container_width=True)
+
