@@ -348,8 +348,53 @@ fig_genre.update_traces(
 
 st.plotly_chart(fig_genre, use_container_width=True)
 
+# --- Year Line Graph ---
+# --- Prepare data: extract first year ---
+def extract_first_year(year_str):
+    if pd.isna(year_str):
+        return None
+    match = re.match(r"^\s*(\d{4})", str(year_str))
+    if match:
+        return int(match.group(1))
+    return None
 
+df['First Year'] = df['Year'].apply(extract_first_year)
 
+# --- Aggregate number of movies per year ---
+movies_per_year = df['First Year'].value_counts().sort_index()
+years = movies_per_year.index.tolist()
+counts = movies_per_year.values.tolist()
 
+# --- Create line chart ---
+fig_year = px.line(
+    x=years,
+    y=counts,
+    markers=True,
+    labels={'x': 'Year', 'y': 'Number of Movies/TV Shows'},
+    title='Movies/TV Shows Released per Year'
+)
 
+# --- Style chart ---
+fig_year.update_traces(line=dict(color='cyan', width=3), marker=dict(size=8, color='cyan'))
+fig_year.update_layout(
+    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor='rgba(0,0,0,0)',
+    xaxis=dict(
+        showgrid=False,
+        showline=True,
+        linecolor='white',
+        tickfont=dict(color='white'),
+        dtick=1  # ensures evenly spaced ticks
+    ),
+    yaxis=dict(
+        showgrid=False,
+        showline=True,
+        linecolor='white',
+        tickfont=dict(color='white')
+    ),
+    title=dict(font=dict(color='white', size=22)),
+    margin=dict(l=40, r=40, t=60, b=40)
+)
 
+# --- Display chart in Streamlit ---
+st.plotly_chart(fig_year, use_container_width=True)
