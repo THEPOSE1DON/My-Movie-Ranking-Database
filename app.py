@@ -94,7 +94,32 @@ if st.session_state.page == "Results":
     for g in genre_columns: sort_options[g] = g
     default_sort_display = "Ultimate Score"
 
-    # --- Live Search ---
+   # --- Sticky search bar and filters CSS ---
+st.markdown("""
+<style>
+.sticky-container {
+    position: -webkit-sticky; /* Safari */
+    position: sticky;
+    top: 0;
+    background-color: #111; /* or any bg you want */
+    padding: 10px 10px 5px 10px;
+    z-index: 999;
+    border-bottom: 1px solid #444;
+}
+.sticky-container .stTextInput, 
+.sticky-container .stSelectbox, 
+.sticky-container .stMultiselect, 
+.sticky-container .stRadio {
+    margin-bottom: 5px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# --- Sticky search + filters container ---
+with st.container():
+    st.markdown('<div class="sticky-container">', unsafe_allow_html=True)
+
+    # --- Live search ---
     search_term = streamlit_js_eval(
         js_code="""
         const input = window.document.querySelector('input');
@@ -106,27 +131,23 @@ if st.session_state.page == "Results":
         """,
         key="search_input"
     )
-
     st.text_input("🔎 Search by Movie/TV Show Name", value=search_term, key="search_input", placeholder="Type to search…")
-
-    if search_term:
-        filtered_df = filtered_df[filtered_df["Title"].str.lower().str.contains(search_term.lower(), na=False)]
 
     # --- Horizontal filters ---
     row1 = st.columns([1,1,1])
     row2 = st.columns([1,1])
-
     with row1[0]:
         selected_language = st.selectbox("🌍 Language", language_options)
     with row1[1]:
         selected_genres = st.multiselect("🎭 Genre(s)", all_genres)
     with row1[2]:
         selected_years = st.multiselect("📅 Year(s)", unique_years)
-
     with row2[0]:
         sort_choice_display = st.selectbox("📌 Sort by", list(sort_options.keys()), index=list(sort_options.keys()).index(default_sort_display))
     with row2[1]:
         sort_order = st.radio("Order", ["Descending","Ascending"], horizontal=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
     sort_choice = sort_options[sort_choice_display]
     ascending = sort_order=="Ascending"
@@ -214,3 +235,4 @@ if st.session_state.page=="Stats":
     fig_year.update_traces(line=dict(color='cyan', width=3), marker=dict(size=8, color='cyan'))
     fig_year.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', title=dict(text="Movies/TV Shows by Year", x=0.5, font=dict(color='white', size=22)), margin=dict(l=40,r=40,t=60,b=80), xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')), yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
     st.plotly_chart(fig_year, use_container_width=True)
+
