@@ -189,10 +189,15 @@ if st.session_state.page == "Stats":
     fig_lang = go.Figure(go.Bar(x=lang_counts.index, y=lang_counts.values, text=lang_counts.values,
                                 textposition='outside', textfont=dict(color='white', size=12),
                                 marker=dict(color=lang_counts.values, colorscale='Viridis', line=dict(width=0))))
-    fig_lang.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                           xaxis=dict(showgrid=False, tickangle=-45, tickfont=dict(color='white')),
-                           yaxis=dict(showgrid=False, showticklabels=False),
-                           title=dict(text="Movies/TV Shows by Language", x=0.5, font=dict(color='white', size=22)))
+    fig_lang.update_layout(
+    margin=dict(l=40, r=40, t=80, b=40),  # increase top margin (t)
+    xaxis=dict(showgrid=False, tickangle=-45, tickfont=dict(color='white')),
+    yaxis=dict(showgrid=False, showticklabels=False),
+    title=dict(text="Movies/TV Shows by Language", x=0.5, font=dict(color='white', size=22))
+    )
+
+# Ensure numbers are not clipped
+fig_lang.update_traces(textposition='outside', cliponaxis=False)
     st.plotly_chart(fig_lang, use_container_width=True)
 
     # Genre bar graph
@@ -225,6 +230,7 @@ if st.session_state.page == "Stats":
                            xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
                            yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
     st.plotly_chart(fig_year, use_container_width=True)
+
 
 
 
