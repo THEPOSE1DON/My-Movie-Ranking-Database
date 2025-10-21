@@ -286,18 +286,6 @@ fig_lang.update_layout(
     )
 )
 
-# --- Add big summary on the right side (white text) ---
-fig_lang.add_annotation(
-    x=1.12,
-    y=0.5,
-    xref='paper',
-    yref='paper',
-    text=f"<b style='font-size:36px; color:white'>{total_movies}</b><br>"
-         f"<span style='color:white; font-size:14px;'>Movies and Shows watched</span>",
-    showarrow=False,
-    align='center'
-)
-
 # Center align the graph
 st.plotly_chart(fig_lang, use_container_width=True)
 
@@ -359,6 +347,7 @@ fig_genre.update_traces(
 )
 
 st.plotly_chart(fig_genre, use_container_width=True)
+
 
 
 
