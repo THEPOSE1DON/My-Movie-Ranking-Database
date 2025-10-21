@@ -98,11 +98,11 @@ if st.session_state.page == "Results":
 st.markdown("""
 <style>
 .sticky-container {
-    position: -webkit-sticky; /* Safari */
     position: sticky;
     top: 0;
-    background-color: #111; /* or any bg you want */
-    padding: 10px 10px 5px 10px;
+    width: 100%;
+    background-color: #111;
+    padding: 10px;
     z-index: 999;
     border-bottom: 1px solid #444;
 }
@@ -235,4 +235,5 @@ if st.session_state.page=="Stats":
     fig_year.update_traces(line=dict(color='cyan', width=3), marker=dict(size=8, color='cyan'))
     fig_year.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', title=dict(text="Movies/TV Shows by Year", x=0.5, font=dict(color='white', size=22)), margin=dict(l=40,r=40,t=60,b=80), xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')), yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
     st.plotly_chart(fig_year, use_container_width=True)
+
 
