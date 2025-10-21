@@ -1,13 +1,14 @@
 import streamlit as st
-from streamlit_js_eval import st_javascript
 import pandas as pd
 import re
 import plotly.express as px
 import plotly.graph_objects as go
+from streamlit_js_eval import streamlit_js_eval
 
-# --- Page Config (wide mode) ---
+# --- Page Config ---
 st.set_page_config(layout="wide")
 
+# --- Hide default sidebar ---
 st.markdown("""
 <style>
 /* Hide the sidebar completely */
@@ -20,82 +21,47 @@ st.markdown("""
 csv_url = "https://docs.google.com/spreadsheets/d/1sO1ly233qkEqw4_bKr4s_WZwK0uAF6StDMi8pR4ZTxs/export?format=csv&gid=1030199938"
 df = pd.read_csv(csv_url, quotechar='"', engine='python')
 
-# --- Clean column names ---
+# --- Clean columns ---
 df.columns = df.columns.str.strip()
 df.rename(columns={"Movie/TV Show Name": "Title"}, inplace=True)
-
-# --- Compute Ultimate Ranking ---
 df["Ultimate Ranking"] = df["Ultimate Score"].rank(method="min", ascending=False).astype(int)
 
-# --- Custom Title ---
-st.markdown("""
-    <h1 style='text-align: center; margin-bottom: 0.3rem;'>🎬 Noel's Movie Rankings Database</h1>
-""", unsafe_allow_html=True)
+# --- Page title ---
+st.markdown("<h1 style='text-align: center;'>🎬 Noel's Movie Rankings Database</h1>", unsafe_allow_html=True)
 
-# --- Initialize Page State ---
+# --- Page state ---
 if "page" not in st.session_state:
     st.session_state.page = "Results"
 
-# --- CSS for buttons ---
+# --- Navigation buttons ---
 st.markdown("""
-    <style>
-    .stButton>button {
-        height: 3.2em !important;
-        width: 85% !important;
-        font-size: 1.1em !important;
-        font-weight: 600 !important;
-        border-radius: 10px !important;
-        background-color: #f0f0f0;
-        color: black;
-        transition: all 0.2s ease;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .active-button>button {
-        background-color: #4CAF50 !important;
-        color: white !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    .stButton>button:hover {
-        background-color: #d1d1d1;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-    .active-button>button:hover {
-        background-color: #45a049 !important;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0,0,0,0.25);
-    }
-    .left-col {
-        display: flex;
-        justify-content: flex-end;
-    }
-    .right-col {
-        display: flex;
-        justify-content: flex-start;
-    }
-    </style>
+<style>
+.stButton>button {
+    height: 3em !important; width: 80%; font-size: 1em !important; font-weight: 600 !important;
+    border-radius: 10px !important; background-color: #f0f0f0; color: black;
+    transition: all 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.active-button>button { background-color: #4CAF50 !important; color: white !important; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+.stButton>button:hover { background-color: #d1d1d1; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15);}
+.active-button>button:hover { background-color: #45a049 !important; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.25);}
+.left-col {display:flex; justify-content:flex-end;}
+.right-col {display:flex; justify-content:flex-start;}
+</style>
 """, unsafe_allow_html=True)
 
-# --- Two inward-facing buttons ---
-col_left, col_right = st.columns(2)
-
-with col_left:
+col1, col2 = st.columns(2)
+with col1:
     st.markdown(f'<div class="left-col {"active-button" if st.session_state.page=="Results" else ""}">', unsafe_allow_html=True)
-    results_clicked = st.button("📋 Results", key="results_btn", use_container_width=True)
+    if st.button("📋 Results", key="results_btn"):
+        st.session_state.page = "Results"
     st.markdown('</div>', unsafe_allow_html=True)
-
-with col_right:
+with col2:
     st.markdown(f'<div class="right-col {"active-button" if st.session_state.page=="Stats" else ""}">', unsafe_allow_html=True)
-    stats_clicked = st.button("📊 Stats", key="stats_btn", use_container_width=True)
+    if st.button("📊 Stats", key="stats_btn"):
+        st.session_state.page = "Stats"
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- Handle page navigation ---
-if results_clicked:
-    st.session_state.page = "Results"
-elif stats_clicked:
-    st.session_state.page = "Stats"
-
-# --- Helper function for year parsing ---
+# --- Helper functions ---
 def parse_year_range(year_str):
     if pd.isna(year_str):
         return None, None
@@ -106,11 +72,11 @@ def parse_year_range(year_str):
         return start, end
     return None, None
 
-# --- PAGE 1: RESULTS ---
+# --- PAGE: RESULTS ---
 if st.session_state.page == "Results":
     filtered_df = df.copy()
 
-    # --- Prepare Filter Options ---
+    # --- Filters options ---
     all_languages = df["Language"].dropna().apply(lambda x: [lang.strip() for lang in str(x).split(",")]).sum()
     unique_languages = sorted(set(all_languages))
     language_options = ["Select Language"] + unique_languages
@@ -120,111 +86,60 @@ if st.session_state.page == "Results":
     all_years = []
     for y in df["Year"].dropna():
         start, _ = parse_year_range(y)
-        if start is not None:
-            all_years.append(start)
+        if start: all_years.append(start)
     unique_years = sorted(set(all_years))
 
-    genre_columns = [
-        "Action Score", "Adventure Score", "Animation Score", "Biography Score",
-        "Comedy Score", "Crime Score", "Documentary Score", "Drama Score", "Erotic Score",
-        "Family Score", "Fantasy Score", "Feel-Good Score", "Fiction Score", "Heist Score",
-        "History Score", "Horror Score", "Musical Score", "Mystery Score", "Mythology Score",
-        "Romance Score", "Satire Score", "Science Fiction Score", "Sports Score",
-        "Superhero Score", "Survival Score", "Thriller Score", "War Score"
-    ]
+    genre_columns = [col for col in df.columns if "Score" in col]
     sort_options = {"Ultimate Score": "Ultimate Score", "General Score": "General Score", "Last Watched": "Timestamp"}
-    for g in genre_columns:
-        sort_options[g] = g
+    for g in genre_columns: sort_options[g] = g
     default_sort_display = "Ultimate Score"
 
-   # Initialize session state for the search term
-if "search_term" not in st.session_state:
-    st.session_state.search_term = ""
-
-# JavaScript code to capture input events and send the value to Python
-js_code = """
-const input = document.getElementById("search_input");
-input.addEventListener("input", function() {
-    Streamlit.setComponentValue("search_term", input.value);
-});
-"""
-
-# Display the search input field
-st.text_input("Search", key="search_input")
-
-# Execute the JavaScript code
-st_javascript(js_code)
-
-# Update the session state with the captured search term
-if "search_term" in st.session_state:
-    search_term = st.session_state.search_term.lower()
-    st.write(f"Search term: {search_term}")
-
-    # --- Callback function to update search term live ---
-    def update_search():
-        st.session_state.search_term = st.session_state.search_input
-
-    # --- Search bar (live filtering) ---
-    st.markdown("### Search")
-    st.text_input(
-        "🔎 Search by Movie/TV Show Name",
-        key="search_input",
-        on_change=update_search
-    )
+    # --- Live Search ---
     search_term = streamlit_js_eval(
-    js_code="""
-        const input = window.document.querySelector('input[placeholder="🔎 Search by Movie/TV Show Name"]');
+        js_code="""
+        const input = window.document.querySelector('input');
         if (input) {
-            input.addEventListener('input', e => {
-                window.streamlitSetComponentValue(e.target.value);
-            });
+            input.addEventListener('input', e => { window.streamlitSetComponentValue(e.target.value); });
             return input.value;
         }
         return '';
-    """,
-    key="search_input"
-)
-    if search_term:
-    filtered_df = filtered_df[filtered_df["Title"].str.lower().str.contains(search_term.lower(), na=False)]
-    
-    # --- Horizontal Filters ---
-    row1_cols = st.columns([1, 1, 1])
-    row2_cols = st.columns([1, 1])
+        """,
+        key="search_input"
+    )
 
-    # Row 1: Language, Genre(s), Year(s)
-    with row1_cols[0]:
+    st.text_input("🔎 Search by Movie/TV Show Name", value=search_term, key="search_input", placeholder="Type to search…")
+
+    if search_term:
+        filtered_df = filtered_df[filtered_df["Title"].str.lower().str.contains(search_term.lower(), na=False)]
+
+    # --- Horizontal filters ---
+    row1 = st.columns([1,1,1])
+    row2 = st.columns([1,1])
+
+    with row1[0]:
         selected_language = st.selectbox("🌍 Language", language_options)
-    with row1_cols[1]:
+    with row1[1]:
         selected_genres = st.multiselect("🎭 Genre(s)", all_genres)
-    with row1_cols[2]:
+    with row1[2]:
         selected_years = st.multiselect("📅 Year(s)", unique_years)
 
-    # Row 2: Sort by, Order
-    with row2_cols[0]:
-        sort_choice_display = st.selectbox(
-            "📌 Sort by",
-            list(sort_options.keys()),
-            index=list(sort_options.keys()).index(default_sort_display)
-        )
-    with row2_cols[1]:
-        sort_order = st.radio("Order", ["Descending", "Ascending"], horizontal=True)
+    with row2[0]:
+        sort_choice_display = st.selectbox("📌 Sort by", list(sort_options.keys()), index=list(sort_options.keys()).index(default_sort_display))
+    with row2[1]:
+        sort_order = st.radio("Order", ["Descending","Ascending"], horizontal=True)
 
     sort_choice = sort_options[sort_choice_display]
-    ascending = True if sort_order == "Ascending" else False
+    ascending = sort_order=="Ascending"
 
-    # --- Apply Filters ---
-    search_term = st.session_state.search_term.lower()
-    if search_term:
-        filtered_df = filtered_df[filtered_df["Title"].str.lower().str.contains(search_term, na=False)]
+    # --- Apply filters ---
     if selected_genres:
-        filtered_df = filtered_df[filtered_df["Genres"].apply(lambda x: all(g in x for g in selected_genres if isinstance(x, str)))]
+        filtered_df = filtered_df[filtered_df["Genres"].apply(lambda x: all(g in x for g in selected_genres if isinstance(x,str)))]
     if selected_language != "Select Language":
         filtered_df = filtered_df[filtered_df["Language"].str.contains(selected_language, na=False)]
     if selected_years:
         def year_in_range(row_year, selected):
             start, end = parse_year_range(row_year)
-            if start is None:
-                return False
+            if start is None: return False
             return any(sel >= start and sel <= end for sel in selected)
         filtered_df = filtered_df[filtered_df["Year"].apply(lambda y: year_in_range(y, selected_years))]
 
@@ -233,24 +148,21 @@ if "search_term" in st.session_state:
 
     filtered_df = filtered_df.sort_values(by=sort_choice, ascending=ascending)
 
-    # --- Display Results Header ---
-    results_count = len(filtered_df)
-    st.write(f"### Results ({sort_choice_display}) — {results_count} found")
-
-    # --- Display Results ---
+    # --- Display results ---
+    st.write(f"### Results ({sort_choice_display}) — {len(filtered_df)} found")
     if filtered_df.empty:
         st.warning("No movies found with the current filters/search.")
     else:
-        left_space, main_area, right_space = st.columns([1, 3, 1])
-        with main_area:
+        _, main, _ = st.columns([1,3,1])
+        with main:
             for i, (_, row) in enumerate(filtered_df.iterrows(), start=1):
-                col1, col2 = st.columns([1, 2])
-                with col1:
+                c1, c2 = st.columns([1,2])
+                with c1:
                     if isinstance(row["Poster"], str) and row["Poster"].startswith("http"):
                         st.image(row["Poster"], width=200)
                     else:
                         st.write("📌 No poster available")
-                with col2:
+                with c2:
                     st.markdown(f"### #{i}. {row['Title']} ({row['Year']})")
                     st.write(f"🏆 Ultimate Ranking: #{row['Ultimate Ranking']}")
                     st.write(f"🎭 Genres: {row['Genres']}")
@@ -269,119 +181,36 @@ if "search_term" in st.session_state:
                         st.markdown(f"**💭 My Comment:** {row['Comment']}")
                 st.markdown("---")
 
-
-# --- PAGE 2: STATS ---
-if st.session_state.page == "Stats":
+# --- PAGE: STATS ---
+if st.session_state.page=="Stats":
     st.header("📊 Statistics")
+    total_movies = len(df)
+    st.markdown(f"<div style='text-align:center;'><span style='font-size:60px; font-weight:bold; color:white'>{total_movies}</span><br><span style='font-size:20px; color:white'>Movies and Shows watched</span></div>", unsafe_allow_html=True)
 
-# --- Total movies and shows watched ---
-total_movies = len(df)
-st.markdown(
-    f"""
-    <div style='text-align: center; margin-top: 10px; margin-bottom: 40px;'>
-        <span style='font-size: 60px; font-weight: bold; color: white;'>{total_movies}</span><br>
-        <span style='font-size: 20px; color: white;'>Movies and Shows watched</span>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+    # --- Language bar ---
+    lang_counts = df["Language"].dropna().str.split(",").explode().str.strip().value_counts()
+    lang_counts = lang_counts.sort_index(ascending=True).sort_values(ascending=False, kind="mergesort")
+    fig_lang = go.Figure(go.Bar(x=lang_counts.index, y=lang_counts.values, text=lang_counts.values, textposition='outside', textfont=dict(color='white', size=12), marker=dict(color=lang_counts.values, colorscale='Viridis', line=dict(width=0))))
+    fig_lang.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', xaxis=dict(showgrid=False, tickangle=-45, tickfont=dict(color='white')), yaxis=dict(showgrid=False, showticklabels=False), title=dict(text="Movies/TV Shows by Language", x=0.5, font=dict(color='white', size=22)))
+    st.plotly_chart(fig_lang, use_container_width=True)
 
-# --- Language Bar Graph ---
-language_counts = (
-    df["Language"]
-    .dropna()
-    .str.split(",")
-    .explode()
-    .str.strip()
-    .value_counts()
-)
-language_counts = (
-    language_counts.sort_index(ascending=True)
-    .sort_values(ascending=False, kind="mergesort")
-)
-languages = language_counts.index.tolist()
-counts = language_counts.values.tolist()
-fig_lang = go.Figure()
-fig_lang.add_trace(
-    go.Bar(
-        x=languages,
-        y=counts,
-        marker=dict(color=counts, colorscale='Viridis', line=dict(width=0)),
-        text=counts,
-        textposition='outside',
-        textfont=dict(color='white', size=12),
-        hovertemplate='%{x}: %{y}<extra></extra>'
-    )
-)
-fig_lang.update_layout(
-    plot_bgcolor='rgba(0,0,0,0)',
-    paper_bgcolor='rgba(0,0,0,0)',
-    xaxis=dict(showgrid=False, showline=False, tickangle=-45, tickfont=dict(color='white')),
-    yaxis=dict(showgrid=False, showline=False, showticklabels=False),
-    margin=dict(l=80, r=80, t=60, b=60),
-    title=dict(text="Movies/TV Shows by Language", x=0.5, xanchor='center', font=dict(color='white', size=22))
-)
-st.plotly_chart(fig_lang, use_container_width=True)
+    # --- Genre bar ---
+    genre_counts = df["Genres"].dropna().str.split(",").explode().str.strip().value_counts().sort_values(ascending=True)
+    fig_height = max(400, len(genre_counts)*30)
+    fig_genre = px.bar(genre_counts, x=genre_counts.values, y=genre_counts.index, orientation='h', text=genre_counts.values, color=genre_counts.values, color_continuous_scale='Cividis')
+    fig_genre.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', showlegend=False, margin=dict(l=120,r=40,t=60,b=40), height=fig_height, title=dict(text="Movies/TV Shows by Genre", x=0.5, font=dict(color='white', size=22)), xaxis=dict(showgrid=False, showline=False, tickfont=dict(color='white')), yaxis=dict(showgrid=False, showline=False, tickfont=dict(color='white')))
+    fig_genre.update_traces(textposition='outside', textfont=dict(color='white', size=12))
+    st.plotly_chart(fig_genre, use_container_width=True)
 
-# --- Genre Bar Graph ---
-genre_counts = (
-    df["Genres"]
-    .dropna()
-    .str.split(",")
-    .explode()
-    .str.strip()
-    .value_counts()
-    .sort_values(ascending=True)
-)
-fig_height = max(400, len(genre_counts) * 30)
-fig_genre = px.bar(
-    genre_counts,
-    x=genre_counts.values,
-    y=genre_counts.index,
-    orientation='h',
-    labels={'x': 'Number of Movies/TV Shows', 'y': 'Genre'},
-    text=genre_counts.values,
-    color=genre_counts.values,
-    color_continuous_scale='Cividis'
-)
-fig_genre.update_layout(
-    title=dict(text="Movies/TV Shows by Genre", x=0.5, xanchor='center', font=dict(color='white', size=22)),
-    showlegend=False,
-    plot_bgcolor='rgba(0,0,0,0)',
-    paper_bgcolor='rgba(0,0,0,0)',
-    margin=dict(l=120, r=40, t=60, b=40),
-    height=fig_height,
-    xaxis=dict(showgrid=False, showline=False, tickfont=dict(color='white')),
-    yaxis=dict(showgrid=False, showline=False, tickfont=dict(color='white'))
-)
-fig_genre.update_traces(textfont=dict(color='white', size=12), textposition='outside')
-st.plotly_chart(fig_genre, use_container_width=True)
+    # --- Year line graph ---
+    def extract_first_year(y):
+        if pd.isna(y): return None
+        match = re.match(r"^\s*(\d{4})", str(y))
+        return int(match.group(1)) if match else None
 
-# --- Year Line Graph ---
-def extract_first_year(year_str):
-    if pd.isna(year_str):
-        return None
-    match = re.match(r"^\s*(\d{4})", str(year_str))
-    if match:
-        return int(match.group(1))
-    return None
-df['First Year'] = df['Year'].apply(extract_first_year)
-movies_per_year = df['First Year'].value_counts().sort_index()
-years = movies_per_year.index.tolist()
-counts = movies_per_year.values.tolist()
-fig_year = px.line(x=years, y=counts, markers=True, labels={'x': 'Year', 'y': 'Number of Movies/TV Shows'})
-fig_year.update_traces(line=dict(color='cyan', width=3), marker=dict(size=8, color='cyan'))
-fig_year.update_layout(
-    plot_bgcolor='rgba(0,0,0,0)',
-    paper_bgcolor='rgba(0,0,0,0)',
-    xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white'), dtick=1,
-               tickvals=years, ticktext=[str(y) for y in years], tickangle=90),
-    yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
-    title=dict(text="Movies/TV Shows by Year", x=0.5, xanchor='center', font=dict(color='white', size=22)),
-    margin=dict(l=40, r=40, t=60, b=80)
-)
-st.plotly_chart(fig_year, use_container_width=True)
-
-
-
-
+    df['First Year'] = df['Year'].apply(extract_first_year)
+    movies_per_year = df['First Year'].value_counts().sort_index()
+    fig_year = px.line(x=movies_per_year.index, y=movies_per_year.values, markers=True, labels={'x':'Year','y':'Number of Movies/TV Shows'})
+    fig_year.update_traces(line=dict(color='cyan', width=3), marker=dict(size=8, color='cyan'))
+    fig_year.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', title=dict(text="Movies/TV Shows by Year", x=0.5, font=dict(color='white', size=22)), margin=dict(l=40,r=40,t=60,b=80), xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')), yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
+    st.plotly_chart(fig_year, use_container_width=True)
