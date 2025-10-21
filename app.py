@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 
 # --- Page Config (wide mode) ---
 st.set_page_config(layout="wide")
+
 # --- Hide default Streamlit sidebar ---
 st.markdown(
     """
@@ -253,7 +254,6 @@ st.markdown(
 )
 
 # --- Language Bar Graph ---
-# --- Prepare data ---
 language_counts = (
     df["Language"]
     .dropna()
@@ -262,61 +262,32 @@ language_counts = (
     .str.strip()
     .value_counts()
 )
-
-# Sort by count (descending), then alphabetically for ties
 language_counts = (
-    language_counts.sort_index(ascending=True)  # alphabetical first
-    .sort_values(ascending=False, kind="mergesort")  # then by count, stable sort
+    language_counts.sort_index(ascending=True)
+    .sort_values(ascending=False, kind="mergesort")
 )
-
 languages = language_counts.index.tolist()
 counts = language_counts.values.tolist()
-
-# --- Create figure ---
 fig_lang = go.Figure()
-
-# Add bars with white numbers above (textposition='outside')
 fig_lang.add_trace(
     go.Bar(
         x=languages,
         y=counts,
-        marker=dict(
-            color=counts,
-            colorscale='Viridis',
-            line=dict(width=0)
-        ),
+        marker=dict(color=counts, colorscale='Viridis', line=dict(width=0)),
         text=counts,
         textposition='outside',
         textfont=dict(color='white', size=12),
         hovertemplate='%{x}: %{y}<extra></extra>'
     )
 )
-
-# --- Style (dark, clean, white text) ---
 fig_lang.update_layout(
     plot_bgcolor='rgba(0,0,0,0)',
     paper_bgcolor='rgba(0,0,0,0)',
-    xaxis=dict(
-        showgrid=False,
-        showline=False,
-        tickangle=-45,
-        tickfont=dict(color='white')
-    ),
-    yaxis=dict(
-        showgrid=False,
-        showline=False,
-        showticklabels=False
-    ),
-    margin=dict(l=80, r=80, t=60, b=60),  # <-- balanced margins to center graph
-    title=dict(
-        text="Movies/TV Shows by Language",
-        x=0.5,
-        xanchor='center',
-        font=dict(color='white', size=22)
-    )
+    xaxis=dict(showgrid=False, showline=False, tickangle=-45, tickfont=dict(color='white')),
+    yaxis=dict(showgrid=False, showline=False, showticklabels=False),
+    margin=dict(l=80, r=80, t=60, b=60),
+    title=dict(text="Movies/TV Shows by Language", x=0.5, xanchor='center', font=dict(color='white', size=22))
 )
-
-# Center align the graph
 st.plotly_chart(fig_lang, use_container_width=True)
 
 # --- Genre Bar Graph ---
@@ -329,12 +300,7 @@ genre_counts = (
     .value_counts()
     .sort_values(ascending=True)
 )
-
-import plotly.express as px
-
-# Dynamically adjust figure height based on number of genres
 fig_height = max(400, len(genre_counts) * 30)
-
 fig_genre = px.bar(
     genre_counts,
     x=genre_counts.values,
@@ -345,41 +311,20 @@ fig_genre = px.bar(
     color=genre_counts.values,
     color_continuous_scale='Cividis'
 )
-
 fig_genre.update_layout(
-    title=dict(
-        text="Movies/TV Shows by Genre",
-        x=0.5,
-        xanchor='center',
-        font=dict(color='white', size=22)
-    ),
+    title=dict(text="Movies/TV Shows by Genre", x=0.5, xanchor='center', font=dict(color='white', size=22)),
     showlegend=False,
     plot_bgcolor='rgba(0,0,0,0)',
     paper_bgcolor='rgba(0,0,0,0)',
     margin=dict(l=120, r=40, t=60, b=40),
     height=fig_height,
-    xaxis=dict(
-        showgrid=False,
-        showline=False,
-        tickfont=dict(color='white')
-    ),
-    yaxis=dict(
-        showgrid=False,
-        showline=False,
-        tickfont=dict(color='white')
-    ),
+    xaxis=dict(showgrid=False, showline=False, tickfont=dict(color='white')),
+    yaxis=dict(showgrid=False, showline=False, tickfont=dict(color='white'))
 )
-
-# White text labels on bars
-fig_genre.update_traces(
-    textfont=dict(color='white', size=12),
-    textposition='outside'
-)
-
+fig_genre.update_traces(textfont=dict(color='white', size=12), textposition='outside')
 st.plotly_chart(fig_genre, use_container_width=True)
 
 # --- Year Line Graph ---
-# --- Prepare data: extract first year ---
 def extract_first_year(year_str):
     if pd.isna(year_str):
         return None
@@ -387,52 +332,19 @@ def extract_first_year(year_str):
     if match:
         return int(match.group(1))
     return None
-
 df['First Year'] = df['Year'].apply(extract_first_year)
-
-# --- Aggregate number of movies per year ---
 movies_per_year = df['First Year'].value_counts().sort_index()
 years = movies_per_year.index.tolist()
 counts = movies_per_year.values.tolist()
-
-# --- Create line chart ---
-fig_year = px.line(
-    x=years,
-    y=counts,
-    markers=True,
-    labels={'x': 'Year', 'y': 'Number of Movies/TV Shows'}
-)
-
-# --- Style chart ---
+fig_year = px.line(x=years, y=counts, markers=True, labels={'x': 'Year', 'y': 'Number of Movies/TV Shows'})
 fig_year.update_traces(line=dict(color='cyan', width=3), marker=dict(size=8, color='cyan'))
 fig_year.update_layout(
     plot_bgcolor='rgba(0,0,0,0)',
     paper_bgcolor='rgba(0,0,0,0)',
-    xaxis=dict(
-        showgrid=False,
-        showline=True,
-        linecolor='white',
-        tickfont=dict(color='white'),
-        dtick=1,
-        tickvals=years,  # only show years with data
-        ticktext=[str(y) for y in years],  # ensure labels match
-        tickangle=90  # rotate labels vertically
-    ),
-    yaxis=dict(
-        showgrid=False,
-        showline=True,
-        linecolor='white',
-        tickfont=dict(color='white')
-    ),
-    title=dict(
-        text="Movies/TV Shows by Year",
-        x=0.5,
-        xanchor='center',
-        font=dict(color='white', size=22)
-    ),
-    margin=dict(l=40, r=40, t=60, b=80)  # extra bottom margin for vertical labels
+    xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white'), dtick=1,
+               tickvals=years, ticktext=[str(y) for y in years], tickangle=90),
+    yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
+    title=dict(text="Movies/TV Shows by Year", x=0.5, xanchor='center', font=dict(color='white', size=22)),
+    margin=dict(l=40, r=40, t=60, b=80)
 )
-
-# --- Display chart in Streamlit ---
 st.plotly_chart(fig_year, use_container_width=True)
-
