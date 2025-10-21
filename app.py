@@ -1,4 +1,5 @@
 import streamlit as st
+from streamlit_js_eval import st_javascript
 import pandas as pd
 import re
 import plotly.express as px
@@ -136,9 +137,28 @@ if st.session_state.page == "Results":
         sort_options[g] = g
     default_sort_display = "Ultimate Score"
 
-    # --- Initialize search_term in session_state ---
-    if "search_term" not in st.session_state:
-        st.session_state.search_term = ""
+   # Initialize session state for the search term
+if "search_term" not in st.session_state:
+    st.session_state.search_term = ""
+
+# JavaScript code to capture input events and send the value to Python
+js_code = """
+const input = document.getElementById("search_input");
+input.addEventListener("input", function() {
+    Streamlit.setComponentValue("search_term", input.value);
+});
+"""
+
+# Display the search input field
+st.text_input("Search", key="search_input")
+
+# Execute the JavaScript code
+st_javascript(js_code)
+
+# Update the session state with the captured search term
+if "search_term" in st.session_state:
+    search_term = st.session_state.search_term.lower()
+    st.write(f"Search term: {search_term}")
 
     # --- Callback function to update search term live ---
     def update_search():
@@ -151,7 +171,22 @@ if st.session_state.page == "Results":
         key="search_input",
         on_change=update_search
     )
-
+    search_term = streamlit_js_eval(
+    js_code="""
+        const input = window.document.querySelector('input[placeholder="🔎 Search by Movie/TV Show Name"]');
+        if (input) {
+            input.addEventListener('input', e => {
+                window.streamlitSetComponentValue(e.target.value);
+            });
+            return input.value;
+        }
+        return '';
+    """,
+    key="search_input"
+)
+    if search_term:
+    filtered_df = filtered_df[filtered_df["Title"].str.lower().str.contains(search_term.lower(), na=False)]
+    
     # --- Horizontal Filters ---
     row1_cols = st.columns([1, 1, 1])
     row2_cols = st.columns([1, 1])
@@ -346,6 +381,7 @@ fig_year.update_layout(
     margin=dict(l=40, r=40, t=60, b=80)
 )
 st.plotly_chart(fig_year, use_container_width=True)
+
 
 
 
