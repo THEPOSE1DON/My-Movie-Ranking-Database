@@ -104,45 +104,24 @@ def parse_year_range(year_str):
 if st.session_state.page == "Results":
     filtered_df = df.copy()
 
-    # --- Language Filter ---
+    # --- Prepare filter options ---
+    # Language
     all_languages = df["Language"].dropna().apply(lambda x: [lang.strip() for lang in str(x).split(",")]).sum()
     unique_languages = sorted(set(all_languages))
     language_options = ["Select Language"] + unique_languages
-    selected_language = st.sidebar.selectbox("🌍 Filter by Language", language_options)
 
-    # --- Genre Filter ---
+    # Genre
     all_genres = sorted(set(g.strip() for sublist in df["Genres"].dropna().str.split(",") for g in sublist))
-    selected_genres = st.sidebar.multiselect("🎭 Filter by Genre(s)", all_genres)
 
-    # --- Year Filter ---
+    # Year
     all_years = []
     for y in df["Year"].dropna():
         start, _ = parse_year_range(y)
         if start is not None:
             all_years.append(start)
     unique_years = sorted(set(all_years))
-    selected_years = st.sidebar.multiselect("📅 Filter by Year(s)", unique_years)
 
-    # --- Search Bar ---
-    st.markdown("### Search")
-    search_term = st.text_input("🔎 Search by Movie/TV Show Name").lower()
-
-    # --- Apply Filters ---
-    if search_term:
-        filtered_df = filtered_df[filtered_df["Title"].str.lower().str.contains(search_term, na=False)]
-    if selected_genres:
-        filtered_df = filtered_df[filtered_df["Genres"].apply(lambda x: all(g in x for g in selected_genres if isinstance(x, str)))]
-    if selected_language != "Select Language":
-        filtered_df = filtered_df[filtered_df["Language"].str.contains(selected_language, na=False)]
-    if selected_years:
-        def year_in_range(row_year, selected):
-            start, end = parse_year_range(row_year)
-            if start is None:
-                return False
-            return any(sel >= start and sel <= end for sel in selected)
-        filtered_df = filtered_df[filtered_df["Year"].apply(lambda y: year_in_range(y, selected_years))]
-
-    # --- Sorting ---
+    # Sorting options
     genre_columns = [
         "Action Score", "Adventure Score", "Animation Score", "Biography Score",
         "Comedy Score", "Crime Score", "Documentary Score", "Drama Score", "Erotic Score",
@@ -156,24 +135,54 @@ if st.session_state.page == "Results":
         sort_options[g] = g
 
     default_sort_display = "Ultimate Score"
-    sort_choice_display = st.sidebar.selectbox(
-        "📌 Sort by",
-        list(sort_options.keys()),
-        index=list(sort_options.keys()).index(default_sort_display)
-    )
+
+    # --- Search bar ---
+    st.markdown("### Search")
+    search_term = st.text_input("🔎 Search by Movie/TV Show Name").lower()
+
+    # --- Horizontal filter layout ---
+    cols = st.columns([1,1,1,1,1,1])  # adjust column widths as needed
+    with cols[0]:
+        selected_language = st.selectbox("🌍 Language", language_options)
+    with cols[1]:
+        selected_genres = st.multiselect("🎭 Genre(s)", all_genres)
+    with cols[2]:
+        selected_years = st.multiselect("📅 Year(s)", unique_years)
+    with cols[3]:
+        sort_choice_display = st.selectbox("📌 Sort by", list(sort_options.keys()), index=list(sort_options.keys()).index(default_sort_display))
+    with cols[4]:
+        sort_order = st.radio("Order", ["Descending", "Ascending"], horizontal=True)
+
     sort_choice = sort_options[sort_choice_display]
-    sort_order = st.sidebar.radio("Order", ["Descending", "Ascending"])
     ascending = True if sort_order == "Ascending" else False
 
+    # --- Apply Filters ---
+    if search_term:
+        filtered_df = filtered_df[filtered_df["Title"].str.lower().str.contains(search_term, na=False)]
+    if selected_genres:
+        filtered_df = filtered_df[
+            filtered_df["Genres"].apply(lambda x: all(g in x for g in selected_genres if isinstance(x, str)))
+        ]
+    if selected_language != "Select Language":
+        filtered_df = filtered_df[filtered_df["Language"].str.contains(selected_language, na=False)]
+    if selected_years:
+        def year_in_range(row_year, selected):
+            start, end = parse_year_range(row_year)
+            if start is None:
+                return False
+            return any(sel >= start and sel <= end for sel in selected)
+        filtered_df = filtered_df[filtered_df["Year"].apply(lambda y: year_in_range(y, selected_years))]
+
+    # --- Sorting ---
     if sort_choice == "Timestamp":
         filtered_df["Timestamp"] = pd.to_datetime(filtered_df["Timestamp"], errors="coerce")
-
     filtered_df = filtered_df.sort_values(by=sort_choice, ascending=ascending)
 
-    # --- Display Results ---
+    # --- Display Results Header ---
     results_count = len(filtered_df)
     st.write(f"### Results ({sort_choice_display}) — {results_count} found")
 
+    # --- Display Movies ---
     if filtered_df.empty:
         st.warning("No movies found with the current filters/search.")
     else:
@@ -405,4 +414,5 @@ fig_year.update_layout(
 
 # --- Display chart in Streamlit ---
 st.plotly_chart(fig_year, use_container_width=True)
+
 
