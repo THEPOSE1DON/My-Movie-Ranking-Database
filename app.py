@@ -181,7 +181,7 @@ if st.session_state.page == "Results":
 if st.session_state.page == "Stats":
     st.header("📊 Statistics")
     total_movies = len(df)
-    st.markdown(f"<div style='text-align:center;'><span style='font-size:60px; font-weight:bold; color:white'>{total_movies}</span><br><span style='font-size:20px; color:white'>Movies and Shows watched</span></div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align:center;'><span style='font-size:60px; font-weight:bold; color:white'>{total_movies}</span><br><span style='font-size:20px; color:white'>Movies and TV Shows watched</span></div>", unsafe_allow_html=True)
 
     # Language bar graph
     lang_counts = df["Language"].dropna().str.split(",").explode().str.strip().value_counts()
@@ -225,6 +225,7 @@ if st.session_state.page == "Stats":
                            xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
                            yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
     st.plotly_chart(fig_year, use_container_width=True)
+
 
 
 
