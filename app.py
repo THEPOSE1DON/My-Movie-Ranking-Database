@@ -376,7 +376,7 @@ fig_year = px.line(
         x=0.5,
         xanchor='center',
         font=dict(color='white', size=22)
-)
+))
 
 # --- Style chart ---
 fig_year.update_traces(line=dict(color='cyan', width=3), marker=dict(size=8, color='cyan'))
@@ -405,5 +405,6 @@ fig_year.update_layout(
 
 # --- Display chart in Streamlit ---
 st.plotly_chart(fig_year, use_container_width=True)
+
 
 
