@@ -198,7 +198,7 @@ if st.session_state.page == "Stats":
 
 # Ensure numbers are not clipped
 fig_lang.update_traces(textposition='outside', cliponaxis=False)
-    st.plotly_chart(fig_lang, use_container_width=True)
+st.plotly_chart(fig_lang, use_container_width=True)
 
     # Genre bar graph
     genre_counts = df["Genres"].dropna().str.split(",").explode().str.strip().value_counts().sort_values(ascending=True)
@@ -230,6 +230,7 @@ fig_lang.update_traces(textposition='outside', cliponaxis=False)
                            xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
                            yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
     st.plotly_chart(fig_year, use_container_width=True)
+
 
 
 
