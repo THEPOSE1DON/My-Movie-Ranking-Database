@@ -23,53 +23,54 @@ if "page" not in st.session_state:
 # --- Page Heading ---
 st.markdown("<h1 style='text-align: center;'>🎬 Noel's Movie Rankings Database</h1>", unsafe_allow_html=True)
 
-# --- Navigation buttons ---
+# --- Page Switch Buttons (above search bar) ---
 st.markdown("""
-<style>
-.stButton>button {
-    height: 3em !important; 
-    width: 80%; 
-    font-size: 1em !important; 
-    font-weight: 600 !important;
-    border-radius: 10px !important; 
-    background-color: #f0f0f0; 
-    color: black;
-    transition: all 0.2s ease; 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-.active-button>button { 
-    background-color: #4CAF50 !important; 
-    color: white !important; 
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
-}
-.stButton>button:hover { 
-    background-color: #d1d1d1; 
-    transform: translateY(-2px); 
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-.active-button>button:hover { 
-    background-color: #45a049 !important; 
-    transform: translateY(-2px); 
-    box-shadow: 0 6px 12px rgba(0,0,0,0.25);
-}
-.left-col {display:flex; justify-content:flex-end;}
-.right-col {display:flex; justify-content:flex-start;}
-</style>
+    <style>
+    /* Create a clean two-button layout that hugs the center line */
+    .button-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 1.5em;
+    }
+    .left-button, .right-button {
+        flex: 0 0 42%;              /* make both wide but not too wide */
+        height: 3.2em;              /* roughly search bar height */
+        font-size: 1.1em;
+        font-weight: 600;
+        border-radius: 10px;
+    }
+    .left-button {
+        display: flex;
+        justify-content: flex-end;  /* push Results toward center */
+    }
+    .right-button {
+        display: flex;
+        justify-content: flex-start; /* push Stats toward center */
+    }
+    </style>
 """, unsafe_allow_html=True)
 
-col1, col2 = st.columns(2)
-with col1:
-    st.markdown(f'<div class="left-col {"active-button" if st.session_state.page=="Results" else ""}">', unsafe_allow_html=True)
-    if st.button("📋 Results", key="results_btn"):
-        st.session_state.page = "Results"
+# Two side-by-side buttons aligned toward the center
+col_left, col_right = st.columns(2)
+
+with col_left:
+    st.markdown('<div class="left-button">', unsafe_allow_html=True)
+    results_clicked = st.button("📋 Results", key="results_btn", use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-with col2:
-    st.markdown(f'<div class="right-col {"active-button" if st.session_state.page=="Stats" else ""}">', unsafe_allow_html=True)
-    if st.button("📊 Stats", key="stats_btn"):
-        st.session_state.page = "Stats"
+with col_right:
+    st.markdown('<div class="right-button">', unsafe_allow_html=True)
+    stats_clicked = st.button("📊 Stats", key="stats_btn", use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
+# --- Handle navigation ---
+if results_clicked:
+    st.session_state.page = "Results"
+elif stats_clicked:
+    st.session_state.page = "Stats"
+    
 # --- Helper function ---
 def parse_year_range(year_str):
     if pd.isna(year_str):
@@ -224,6 +225,7 @@ if st.session_state.page == "Stats":
                            xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
                            yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
     st.plotly_chart(fig_year, use_container_width=True)
+
 
 
 
