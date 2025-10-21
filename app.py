@@ -136,11 +136,23 @@ if st.session_state.page == "Results":
         sort_options[g] = g
     default_sort_display = "Ultimate Score"
 
-    # --- Search Bar ---
-    st.markdown("### Search")
-    search_term = st.text_input("🔎 Search by Movie/TV Show Name").lower()
+    # --- Initialize search_term in session_state ---
+    if "search_term" not in st.session_state:
+        st.session_state.search_term = ""
 
-    # --- Horizontal Filters (Below Search Bar) ---
+    # --- Callback function to update search term live ---
+    def update_search():
+        st.session_state.search_term = st.session_state.search_input
+
+    # --- Search bar (live filtering) ---
+    st.markdown("### Search")
+    st.text_input(
+        "🔎 Search by Movie/TV Show Name",
+        key="search_input",
+        on_change=update_search
+    )
+
+    # --- Horizontal Filters ---
     row1_cols = st.columns([1, 1, 1])
     row2_cols = st.columns([1, 1])
 
@@ -166,6 +178,7 @@ if st.session_state.page == "Results":
     ascending = True if sort_order == "Ascending" else False
 
     # --- Apply Filters ---
+    search_term = st.session_state.search_term.lower()
     if search_term:
         filtered_df = filtered_df[filtered_df["Title"].str.lower().str.contains(search_term, na=False)]
     if selected_genres:
@@ -333,5 +346,6 @@ fig_year.update_layout(
     margin=dict(l=40, r=40, t=60, b=80)
 )
 st.plotly_chart(fig_year, use_container_width=True)
+
 
 
