@@ -226,7 +226,7 @@ if clicked_lang and len(clicked_lang) > 0:
     selected_language = clicked_lang[0]['x']  # get the clicked language name
     st.session_state.page = "Results"
     st.session_state.selected_language = selected_language  # custom session key for your filters
-    st.experimental_rerun()
+    st.rerun()
 
 # --- Display chart normally ---
 st.plotly_chart(fig_lang, use_container_width=True)
@@ -295,3 +295,4 @@ fig_year.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0
                         xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
                         yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
 st.plotly_chart(fig_year, use_container_width=True)
+
