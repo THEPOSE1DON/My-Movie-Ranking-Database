@@ -278,30 +278,20 @@ if clicked_genre and len(clicked_genre) > 0:
 # --- Display normally ---
 st.plotly_chart(fig_genre, use_container_width=True)
 
-    # Year line graph
-    def extract_first_year(y):
-        if pd.isna(y): return None
-        match = re.match(r"^\s*(\d{4})", str(y))
-        return int(match.group(1)) if match else None
+# Year line graph
+def extract_first_year(y):
+    if pd.isna(y): return None
+    match = re.match(r"^\s*(\d{4})", str(y))
+    return int(match.group(1)) if match else None
 
-    df['First Year'] = df['Year'].apply(extract_first_year)
-    movies_per_year = df['First Year'].value_counts().sort_index()
-    fig_year = px.line(x=movies_per_year.index, y=movies_per_year.values, markers=True,
-                       labels={'x':'Year','y':'Number of Movies/TV Shows'})
-    fig_year.update_traces(line=dict(color='cyan', width=3), marker=dict(size=8, color='cyan'))
-    fig_year.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                           title=dict(text="Movies/TV Shows by Year", x=0.5, font=dict(color='white', size=22)),
-                           margin=dict(l=40,r=40,t=60,b=80),
-                           xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
-                           yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
-    st.plotly_chart(fig_year, use_container_width=True)
-
-
-
-
-
-
-
-
-
-
+df['First Year'] = df['Year'].apply(extract_first_year)
+movies_per_year = df['First Year'].value_counts().sort_index()
+fig_year = px.line(x=movies_per_year.index, y=movies_per_year.values, markers=True,
+                    labels={'x':'Year','y':'Number of Movies/TV Shows'})
+fig_year.update_traces(line=dict(color='cyan', width=3), marker=dict(size=8, color='cyan'))
+fig_year.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                        title=dict(text="Movies/TV Shows by Year", x=0.5, font=dict(color='white', size=22)),
+                        margin=dict(l=40,r=40,t=60,b=80),
+                        xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
+                        yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
+st.plotly_chart(fig_year, use_container_width=True)
