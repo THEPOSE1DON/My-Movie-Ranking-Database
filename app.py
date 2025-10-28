@@ -94,11 +94,11 @@ if st.session_state.page == "Results":
     all_languages = df["Language"].dropna().apply(lambda x: [lang.strip() for lang in str(x).split(",")]).sum()
     unique_languages = sorted(set(all_languages))
     language_options = ["All"] + unique_languages
-    selected_language = st.selectbox("🌍 Language", language_options)
+    selected_language = st.sidebar.selectbox("🌍 Language", language_options)
 
     # --- Genres ---
     all_genres = sorted(set(g.strip() for sublist in df["Genres"].dropna().str.split(",") for g in sublist))
-    selected_genres = st.multiselect("🎭 Genre(s)", all_genres)
+    selected_genres = st.sidebar.multiselect("🎭 Genre(s)", all_genres)
 
     # --- Years ---
     all_years = []
@@ -288,5 +288,6 @@ fig_year.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0
                         xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
                         yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
 st.plotly_chart(fig_year, use_container_width=True)
+
 
 
