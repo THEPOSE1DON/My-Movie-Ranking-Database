@@ -94,22 +94,11 @@ if st.session_state.page == "Results":
     all_languages = df["Language"].dropna().apply(lambda x: [lang.strip() for lang in str(x).split(",")]).sum()
     unique_languages = sorted(set(all_languages))
     language_options = ["All"] + unique_languages
-    # If user clicked from Stats, preselect that language
-    if "selected_language" in st.session_state and st.session_state.selected_language in language_options:
-        default_lang_index = language_options.index(st.session_state.selected_language)
-    else:
-        default_lang_index = 0
-    selected_language = st.selectbox("🌍 Language", language_options, index=default_lang_index)
+    selected_language = st.selectbox("🌍 Language", language_options)
 
     # --- Genres ---
     all_genres = sorted(set(g.strip() for sublist in df["Genres"].dropna().str.split(",") for g in sublist))
-    # If user clicked a genre from Stats page, preselect it
-    if "selected_genres" in st.session_state and all(g in all_genres for g in st.session_state.selected_genres):
-        default_genres = st.session_state.selected_genres
-    else:
-        default_genres = []
-
-    selected_genres = st.multiselect("🎭 Genre(s)", all_genres, default=default_genres)
+    selected_genres = st.multiselect("🎭 Genre(s)", all_genres)
 
     # --- Years ---
     all_years = []
@@ -195,45 +184,60 @@ if st.session_state.page == "Stats":
     total_movies = len(df)
     st.markdown(f"<div style='text-align:center;'><span style='font-size:60px; font-weight:bold; color:white'>{total_movies}</span><br><span style='font-size:20px; color:white'>Movies and TV Shows watched</span></div>", unsafe_allow_html=True)
 
-    # --- Language bar graph ---
-lang_counts = df["Language"].dropna().str.split(",").explode().str.strip().value_counts()
+# Language bar graph
+lang_counts = (
+    df["Language"]
+    .dropna()
+    .str.split(",")
+    .explode()
+    .str.strip()
+    .value_counts()
+)
+
 lang_counts = lang_counts.sort_index(ascending=True).sort_values(ascending=False, kind="mergesort")
 
-fig_lang = go.Figure(go.Bar(
-    x=lang_counts.index,
-    y=lang_counts.values,
-    text=lang_counts.values,
-    textposition='outside',
-    textfont=dict(color='white', size=12),
-    marker=dict(color=lang_counts.values, colorscale='Viridis', line=dict(width=0))
-))
+fig_lang = go.Figure(
+    go.Bar(
+        x=lang_counts.index,
+        y=lang_counts.values,
+        text=lang_counts.values,
+        textposition='outside',
+        textfont=dict(color='white', size=12),
+        marker=dict(
+            color=lang_counts.values,
+            colorscale='Viridis',
+            line=dict(width=0)
+        )
+    )
+)
 
 fig_lang.update_layout(
-    margin=dict(l=40, r=40, t=80, b=40),
+    margin=dict(l=40, r=40, t=80, b=40),  # increase top margin (t)
     xaxis=dict(showgrid=False, tickangle=-45, tickfont=dict(color='white')),
     yaxis=dict(showgrid=False, showticklabels=False),
-    title=dict(text="Movies/TV Shows by Language", x=0.5, font=dict(color='white', size=22))
+    title=dict(
+        text="Movies/TV Shows by Language",
+        x=0.5,
+        font=dict(color='white', size=22)
+    )
 )
 
 # Ensure numbers are not clipped
 fig_lang.update_traces(textposition='outside', cliponaxis=False)
-
-# --- Make graph clickable ---
-clicked_lang = plotly_events(fig_lang, click_event=True, hover_event=False, select_event=False, override_height=None, key="lang_click")
-
-# --- Handle click: redirect to Results page filtered by that language ---
-if clicked_lang and len(clicked_lang) > 0:
-    selected_language = clicked_lang[0]['x']  # get the clicked language name
-    st.session_state.page = "Results"
-    st.session_state.selected_language = selected_language  # custom session key for your filters
-    st.rerun()
-
-# --- Display chart normally ---
 st.plotly_chart(fig_lang, use_container_width=True)
 
-    # --- Genre bar graph ---
-genre_counts = df["Genres"].dropna().str.split(",").explode().str.strip().value_counts().sort_values(ascending=True)
-fig_height = max(400, len(genre_counts)*30)
+# Genre bar graph
+genre_counts = (
+    df["Genres"]
+    .dropna()
+    .str.split(",")
+    .explode()
+    .str.strip()
+    .value_counts()
+    .sort_values(ascending=True)
+)
+
+fig_height = max(400, len(genre_counts) * 30)
 
 fig_genre = px.bar(
     genre_counts,
@@ -251,31 +255,20 @@ fig_genre.update_layout(
     showlegend=False,
     margin=dict(l=120, r=40, t=60, b=40),
     height=fig_height,
-    title=dict(text="Movies/TV Shows by Genre", x=0.5, font=dict(color='white', size=22)),
+    title=dict(
+        text="Movies/TV Shows by Genre",
+        x=0.5,
+        font=dict(color='white', size=22)
+    ),
     xaxis=dict(showgrid=False, showline=False, tickfont=dict(color='white')),
     yaxis=dict(showgrid=False, showline=False, tickfont=dict(color='white'))
 )
 
-fig_genre.update_traces(textposition='outside', textfont=dict(color='white', size=12))
-
-# --- Make the bar graph clickable ---
-clicked_genre = plotly_events(
-    fig_genre,
-    click_event=True,
-    hover_event=False,
-    select_event=False,
-    override_height=None,
-    key="genre_click"
+fig_genre.update_traces(
+    textposition='outside',
+    textfont=dict(color='white', size=12)
 )
 
-# --- Handle click: redirect to Results page filtered by that genre ---
-if clicked_genre and len(clicked_genre) > 0:
-    selected_genre = clicked_genre[0]['y']  # 'y' holds the genre name (since it's a horizontal bar)
-    st.session_state.page = "Results"
-    st.session_state.selected_genres = [selected_genre]  # pass as list for multiselect compatibility
-    st.experimental_rerun()
-
-# --- Display normally ---
 st.plotly_chart(fig_genre, use_container_width=True)
 
 # Year line graph
@@ -295,4 +288,5 @@ fig_year.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0
                         xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
                         yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
 st.plotly_chart(fig_year, use_container_width=True)
+
 
