@@ -114,7 +114,7 @@ if st.session_state.page == "Results":
     sort_options = {"Ultimate Score": "Ultimate Score", "General Score": "General Score", "Last Watched": "Timestamp"}
     for g in genre_columns:
         sort_options[g] = g
-    default_sort_display = "Ultimate Score"
+    default_sort_display = "Last Watched"
     sort_choice_display = st.sidebar.selectbox("📌 Sort by", list(sort_options.keys()), index=list(sort_options.keys()).index(default_sort_display))
     sort_order = st.sidebar.radio("Order", ["Descending", "Ascending"], index=0)
 
@@ -288,6 +288,7 @@ fig_year.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0
                         xaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')),
                         yaxis=dict(showgrid=False, showline=True, linecolor='white', tickfont=dict(color='white')))
 st.plotly_chart(fig_year, use_container_width=True)
+
 
 
 
