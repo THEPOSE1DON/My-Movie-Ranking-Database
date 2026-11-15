@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Noel’s Movie Rankings</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#101a22;--card:#18262f;--line:#274050;--tx:#eef3f5;--mut:#92a8b3;--a:#f2b84b;--b:#3fb8af}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 Inter,sans-serif}
+h1,h2,.big{font-family:Fraunces,serif}
+header{text-align:center;padding:36px 16px 8px}h1{margin:0;font-size:clamp(28px,5vw,46px);font-weight:800}
+nav,.chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:16px}
+button{font:inherit;cursor:pointer;color:var(--tx);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 18px;transition:.2s}
+button:hover{border-color:var(--a)}button.on{background:var(--a);color:#101a22;border-color:var(--a);font-weight:600}
+main{max-width:1000px;margin:auto;padding:0 16px 60px}.hide{display:none}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.tile,.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.big{font-size:42px;font-weight:800;color:var(--a);line-height:1.1}.mut{color:var(--mut);font-size:14px}
+h2{font-size:22px;margin:28px 0 4px}.row{display:grid;grid-template-columns:130px 1fr 44px;gap:10px;align-items:center;margin:5px 0;cursor:pointer}
+.row span:first-child{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.track{background:#0e171d;border-radius:6px;height:20px}
+.fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--b),var(--a));width:0;transition:width .9s}.row:hover .fill{filter:brightness(1.25)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:700px){.two{grid-template-columns:1fr}}
+.item{display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.item img{width:46px;height:68px;object-fit:cover;border-radius:6px;background:#0e171d}.item b{display:block}
+.hist{display:flex;align-items:flex-end;gap:6px;height:160px}.hist div{flex:1;text-align:center;cursor:pointer}
+.hist i{display:block;background:var(--b);border-radius:6px 6px 0 0;transition:height .9s}.hist div:hover i{background:var(--a)}.hist small{font-size:11px;color:var(--mut)}
+#panel{position:fixed;top:0;right:0;height:100%;width:min(380px,100%);background:var(--card);border-left:1px solid var(--line);padding:18px;transform:translateX(100%);transition:.3s;z-index:9;display:flex;flex-direction:column}
+#panel.open{transform:none}#plist{overflow-y:auto;flex:1}#panel h3{font-family:Fraunces,serif;margin:0 0 4px}
+input{width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--tx);font:inherit}
+.card{display:flex;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
+.card img{width:110px;height:160px;object-fit:cover;border-radius:8px}.card h3{margin:0 0 4px;font-family:Fraunces,serif}
+</style></head><body>
+<header><h1>🎬 Noel’s Movie Rankings</h1><div class="mut" id="sub">Loading…</div></header>
+<nav><button class="on" data-p="stats">📊 Stats</button><button data-p="results">📋 Results</button></nav>
+<div class="chips" id="chips"></div>
+<main>
+<section id="stats">
+ <div class="tiles" id="tiles"></div>
+ <div class="two"><div><h2>Top 10</h2><div class="box" id="top"></div></div><div><h2>Bottom 10</h2><div class="box" id="bot"></div></div></div>
+ <h2>Score distribution</h2><div class="mut">Click a bar to see the titles.</div><div class="box"><div class="hist" id="hist"></div></div>
+ <h2>Average score by genre</h2><div class="box" id="avg"></div>
+ <h2>By genre</h2><div class="mut">Click a bar to see the titles.</div><div class="box" id="genre"></div>
+ <h2>By language</h2><div class="box" id="lang"></div>
+ <h2>By year</h2><div class="box" id="year"></div>
+</section>
+<section id="results" class="hide"><input id="q" placeholder="🔎 Search by title…"><div id="rlist"></div></section>
+</main>
+<aside id="panel"><button id="x" style="align-self:flex-end">Close ✕</button><h3 id="ptitle"></h3><div class="mut" id="pcount"></div><div id="plist"></div></aside>
+<script>
+const $=id=>document.getElementById(id);let ALL=[],type="All";
+const num=v=>{const n=parseFloat(v);return isNaN(n)?null:n};
+const split=s=>(s||"").split(",").map(x=>x.trim()).filter(Boolean);
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+function norm(r){
+  let t=r["Title"]||r["Name"]||r["Movie/TV Show Name"]||"";
+  const tk=Object.keys(r).find(k=>/^type$/i.test(k)); let ty=tk?r[tk]:"";
+  const m=t.match(/\s*\((TV Show|Short Film)\)\s*$/i);
+  if(m){t=t.replace(m[0],"");ty=ty||m[1]}
+  ty=/tv/i.test(ty)?"TV Show":/short/i.test(ty)?"Short Film":"Movie";
+  return{title:t,type:ty,year:(r["Year"]||"").trim(),yr:parseInt(r["Year"])||null,genres:split(r["Genres"]),langs:split(r["Language"]),
+   score:num(r["Ultimate Score"]),poster:r["Poster"]||"",desc:r["Description"]||"",comment:r["Comment"]||"",ts:r["Timestamp"]||""};
+}
+function openPanel(title,items){
+  $("ptitle").textContent=title;$("pcount").textContent=items.length+" titles";
+  $("plist").innerHTML=[...items].sort((a,b)=>(b.score??-1)-(a.score??-1)).map(itemHTML).join("");$("panel").classList.add("open");
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const itemHTML=m=>`<div class="item"><img src="${esc(m.poster)}" alt="" onerror="this.style.visibility='hidden'"><div><b>${esc(m.title)}</b><span class="mut">${esc(m.year)} · ${m.type}${m.score!=null?" · ⭐ "+m.score:""}</span></div></div>`;
+function bars(id,entries,fmt=v=>v){
+  const mx=Math.max(...entries.map(e=>e.v),1);
+  $(id).innerHTML=entries.map((e,i)=>`<div class="row" data-i="${i}" title="${esc(e.items.slice(0,5).map(m=>m.title).join(", ")+(e.items.length>5?" +"+(e.items.length-5)+" more":""))}"><span>${esc(e.k)}</span><div class="track"><div class="fill" style="width:0" data-w="${e.v/mx*100}"></div></div><span>${fmt(e.v)}</span></div>`).join("");
+  $(id).querySelectorAll(".row").forEach(r=>r.onclick=()=>{const e=entries[r.dataset.i];openPanel(e.k,e.items)});
+  setTimeout(()=>$(id).querySelectorAll(".fill").forEach(f=>f.style.width=f.dataset.w+"%"),50);
+}
+function group(data,fn){const g={};data.forEach(m=>fn(m).forEach(k=>(g[k]=g[k]||[]).push(m)));return g}
+function countUp(el,to,dec=0){const t0=performance.now();(function f(n){const p=Math.min((n-t0)/1200,1);el.textContent=(to*(1-Math.pow(1-p,3))).toFixed(dec);if(p<1)requestAnimationFrame(f)})(t0)}
+function render(){
+  const d=ALL.filter(m=>type==="All"||m.type===type),sc=d.filter(m=>m.score!=null);
+  $("sub").textContent=d.length+" titles ranked";
+  const sorted=[...sc].sort((a,b)=>b.score-a.score);
+  const gG=group(d,m=>m.genres),topG=Object.entries(gG).sort((a,b)=>b[1].length-a[1].length)[0];
+  $("tiles").innerHTML=[["Titles watched",d.length,0],["Average score",avg(sc.map(m=>m.score)),1],["Highest score",sorted[0]?.score??0,1],["Genres",Object.keys(gG).length,0]]
+   .map(t=>`<div class="tile"><div class="big" data-to="${t[1]}" data-d="${t[2]}">0</div><div class="mut">${t[0]}</div></div>`).join("")
+   +`<div class="tile"><div class="big" style="font-size:26px">${esc(topG?topG[0]:"–")}</div><div class="mut">Most-watched genre</div></div>`;
+  document.querySelectorAll(".big[data-to]").forEach(e=>countUp(e,+e.dataset.to,+e.dataset.d));
+  $("top").innerHTML=sorted.slice(0,10).map(itemHTML).join("");$("bot").innerHTML=sorted.slice(-10).reverse().map(itemHTML).join("");
+  if(sc.length){const lo=Math.floor(sorted.at(-1).score),hi=Math.ceil(sorted[0].score)||1,n=10,w=(hi-lo)/n||1,b=[...Array(n)].map(()=>[]);
+   sc.forEach(m=>b[Math.min(n-1,Math.floor((m.score-lo)/w))].push(m));const mx=Math.max(...b.map(x=>x.length),1);
+   $("hist").innerHTML=b.map((x,i)=>`<div data-i="${i}"><small>${x.length}</small><i style="height:0" data-h="${x.length/mx*120}"></i><small>${+(lo+i*w).toFixed(1)}</small></div>`).join("");
+   $("hist").querySelectorAll("div").forEach(e=>e.onclick=()=>{const i=e.dataset.i;openPanel("Scores "+(+(lo+i*w).toFixed(1))+"–"+(+(lo+(+i+1)*w).toFixed(1)),b[i])});
+   setTimeout(()=>$("hist").querySelectorAll("i").forEach(i=>i.style.height=i.dataset.h+"px"),50)}
+  bars("avg",Object.entries(gG).map(([k,v])=>({k,items:v,v:avg(v.filter(m=>m.score!=null).map(m=>m.score))})).filter(e=>e.v).sort((a,b)=>b.v-a.v),v=>v.toFixed(1));
+  bars("genre",Object.entries(gG).map(([k,v])=>({k,items:v,v:v.length})).sort((a,b)=>b.v-a.v));
+  bars("lang",Object.entries(group(d,m=>m.langs)).map(([k,v])=>({k,items:v,v:v.length})).sort((a,b)=>b.v-a.v));
+  bars("year",Object.entries(group(d,m=>m.yr?[m.yr]:[])).map(([k,v])=>({k,items:v,v:v.length})).sort((a,b)=>b.k-a.k));
+  results();
+}
+function results(){
+  const q=$("q").value.toLowerCase(),d=ALL.filter(m=>(type==="All"||m.type===type)&&m.title.toLowerCase().includes(q)).sort((a,b)=>(b.ts>a.ts)-(b.ts<a.ts));
+  $("rlist").innerHTML=d.map(m=>`<div class="card"><img src="${esc(m.poster)}" alt="" onerror="this.style.visibility='hidden'"><div><h3>${esc(m.title)} (${esc(m.year)})</h3><div class="mut">${m.type} · ${esc(m.genres.join(", "))} · ${esc(m.langs.join(", "))}</div><p>⭐ ${m.score??"–"}</p><p>${esc(m.desc)}</p><p class="mut">${esc(m.comment)}</p></div></div>`).join("")||"<p class='mut'>No titles match.</p>";
+}
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));$("stats").classList.toggle("hide",b.dataset.p!=="stats");$("results").classList.toggle("hide",b.dataset.p!=="results")});
+$("chips").innerHTML=["All","Movie","TV Show","Short Film"].map(t=>`<button class="${t==="All"?"on":""}">${t}</button>`).join("");
+$("chips").querySelectorAll("button").forEach(b=>b.onclick=()=>{type=b.textContent;$("chips").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));render()});
+$("x").onclick=()=>$("panel").classList.remove("open");$("q").oninput=results;
+fetch("/api/data").then(r=>r.json()).then(d=>{ALL=d.map(norm).filter(m=>m.title);render()}).catch(()=>$("sub").textContent="Couldn’t load the sheet. Check it is shared as “Anyone with the link”.");
+</script></body></html>
