@@ -25,7 +25,7 @@ h2{font-size:22px;margin:28px 0 4px}.row{display:grid;grid-template-columns:130p
 .hist{display:flex;align-items:flex-end;gap:6px;height:160px}.hist div{flex:1;text-align:center;cursor:pointer}
 .hist i{display:block;background:var(--b);border-radius:6px 6px 0 0;transition:height .9s}.hist div:hover i{background:var(--a)}.hist small{font-size:11px;color:var(--mut)}
 #panel,#detail{position:fixed;top:0;right:0;height:100%;width:min(420px,100%);background:var(--card);border-left:1px solid var(--line);padding:18px;transform:translateX(100%);transition:.3s;z-index:9;display:flex;flex-direction:column}
-#panel.open,#detail.open{transform:none}#detail{z-index:10}#dbody{overflow-y:auto;flex:1}#dbody img{width:100%;max-width:240px;border-radius:10px;margin-bottom:8px}#dbody p{margin:6px 0}[data-m]{cursor:pointer}.item:hover,.card:hover{background:#1d3040}.ctl{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}#q{flex:1 1 220px;width:auto}select{padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--tx);font:inherit}#plist{overflow-y:auto;flex:1}#panel h3{font-family:Fraunces,serif;margin:0 0 4px}
+#panel.open,#detail.open{transform:none}#detail{z-index:10}#dbody{overflow-y:auto;flex:1}#dbody img{width:100%;max-width:240px;border-radius:10px;margin-bottom:8px}#dbody p{margin:6px 0}[data-m]{cursor:pointer}.dot{fill:var(--b);opacity:.85;transition:.15s}.dot:hover{fill:var(--a);opacity:1}.item:hover,.card:hover{background:#1d3040}.ctl{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}#q{flex:1 1 220px;width:auto}select{padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--tx);font:inherit}#plist{overflow-y:auto;flex:1}#panel h3{font-family:Fraunces,serif;margin:0 0 4px}
 input{width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--tx);font:inherit}
 .card{display:flex;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
 .card img{width:110px;height:160px;object-fit:cover;border-radius:8px}.card h3{margin:0 0 4px;font-family:Fraunces,serif}
@@ -37,17 +37,18 @@ input{width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--lin
  <div class="tiles" id="tiles"></div>
  <div class="two"><div><h2>Top 10</h2><div class="box" id="top"></div></div><div><h2>Bottom 10</h2><div class="box" id="bot"></div></div></div>
  <h2>All titles</h2><div class="ctl"><input id="q" placeholder="🔎 Search by title…"><select id="sort"><option value="new">Last watched (newest)</option><option value="old">Last watched (oldest)</option><option value="hi">Ultimate score (high → low)</option><option value="lo">Ultimate score (low → high)</option><option value="gen">General score (high → low)</option></select><select id="fg"></select><select id="fl"></select></div><div id="rlist"></div>
- <h2>Score distribution</h2><div class="mut">Click a bar to see the titles.</div><div class="box"><div class="hist" id="hist"></div></div>
- <h2>Average score by genre</h2><div class="box" id="avg"></div>
+ <h2 id="charts">Score distribution</h2><div class="mut">Click a bar to see the titles.</div><div class="box"><div class="hist" id="hist"></div></div>
  <h2>By genre</h2><div class="mut">Click a bar to see the titles.</div><div class="box" id="genre"></div>
  <h2>By language</h2><div class="box" id="lang"></div>
  <h2>By year</h2><div class="box" id="year"></div>
+ <h2>Time span</h2><div class="tiles" id="span"></div>
+ <h2>Release-year timeline</h2><div class="mut">Each dot is a title, stacked by release year. Bigger dot = higher score. Click a dot for details.</div><div class="box" style="overflow-x:auto"><div id="tl"></div></div>
 </section>
 </main>
 <aside id="detail"><button id="dx" style="align-self:flex-end">Close ✕</button><div id="dbody"></div></aside>
 <aside id="panel"><button id="x" style="align-self:flex-end">Close ✕</button><h3 id="ptitle"></h3><div class="mut" id="pcount"></div><div id="plist"></div></aside>
 <script>
-const $=id=>document.getElementById(id);let ALL=[],type="All";
+const $=id=>document.getElementById(id);let ALL=[],type="All",TOP=[];
 const num=v=>{const n=parseFloat(v);return isNaN(n)?null:n};
 const split=s=>(s||"").split(",").map(x=>x.trim()).filter(Boolean);
 const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
@@ -78,7 +79,7 @@ function countUp(el,to,dec=0){const t0=performance.now();(function f(n){const p=
 function render(){
   const d=ALL.filter(m=>type==="All"||m.type===type),sc=d.filter(m=>m.score!=null);
   $("sub").textContent=d.length+" titles ranked";
-  const sorted=[...sc].sort((a,b)=>b.score-a.score);
+  const sorted=[...sc].sort((a,b)=>b.score-a.score);TOP=sorted.slice(0,30);
   const gG=group(d,m=>m.genres),topG=Object.entries(gG).sort((a,b)=>b[1].length-a[1].length)[0];
   $("tiles").innerHTML=[["Titles watched",d.length,0],["Average score",avg(sc.map(m=>m.score)),1],["Highest score",sorted[0]?.score??0,1],["Genres",Object.keys(gG).length,0]]
    .map(t=>`<div class="tile"><div class="big" data-to="${t[1]}" data-d="${t[2]}">0</div><div class="mut">${t[0]}</div></div>`).join("")
@@ -90,10 +91,21 @@ function render(){
    $("hist").innerHTML=b.map((x,i)=>`<div data-i="${i}"><small>${x.length}</small><i style="height:0" data-h="${x.length/mx*120}"></i><small>${+(lo+i*w).toFixed(1)}</small></div>`).join("");
    $("hist").querySelectorAll("div").forEach(e=>e.onclick=()=>{const i=e.dataset.i;openPanel("Scores "+(+(lo+i*w).toFixed(1))+"–"+(+(lo+(+i+1)*w).toFixed(1)),b[i])});
    setTimeout(()=>$("hist").querySelectorAll("i").forEach(i=>i.style.height=i.dataset.h+"px"),50)}
-  bars("avg",Object.entries(gG).map(([k,v])=>({k,items:v,v:avg(v.filter(m=>m.score!=null).map(m=>m.score))})).filter(e=>e.v).sort((a,b)=>b.v-a.v),v=>v.toFixed(1));
   bars("genre",Object.entries(gG).map(([k,v])=>({k,items:v,v:v.length})).sort((a,b)=>b.v-a.v));
   bars("lang",Object.entries(group(d,m=>m.langs)).map(([k,v])=>({k,items:v,v:v.length})).sort((a,b)=>b.v-a.v));
   bars("year",Object.entries(group(d,m=>m.yr?[m.yr]:[])).map(([k,v])=>({k,items:v,v:v.length})).sort((a,b)=>b.k-a.k));
+  const yd=d.filter(m=>m.yr).sort((a,b)=>a.yr-b.yr);
+  if(!yd.length){$("span").innerHTML="";$("tl").innerHTML="<p class='mut'>No release years found.</p>"}
+  else{
+   const o=yd[0],n=yd.at(-1),dec=Math.floor(n.yr/10)-Math.floor(o.yr/10)+1,tc=(l,m)=>`<div class="tile" data-m="${m.id}"><div class="mut">${l}</div><div class="big" style="font-size:24px">${esc(m.title)}</div><div class="mut">${m.yr}</div></div>`;
+   $("span").innerHTML=tc("Oldest",o)+tc("Newest",n)+`<div class="tile"><div class="big" id="dec">0</div><div class="mut">decades covered (${o.yr}–${n.yr})</div></div>`;countUp($("dec"),dec);
+   const c={};yd.forEach(m=>c[m.yr]=(c[m.yr]||0)+1);const H=Math.max(...Object.values(c))*15+50,W=(n.yr-o.yr+1)*14+60,S=[...yd.filter(m=>m.score!=null)].map(m=>m.score),lo=Math.min(...S),hi=Math.max(...S),run={};
+   let g=`<line x1="20" x2="${W-10}" y1="${H-26}" y2="${H-26}" style="stroke:var(--line)"/>`;
+   for(let y=o.yr;y<=n.yr;y++)if(y%((n.yr-o.yr)>60?10:5)===0)g+=`<text x="${30+(y-o.yr)*14}" y="${H-8}" text-anchor="middle" font-size="11" style="fill:var(--mut)">${y}</text>`;
+   yd.forEach(m=>{const k=run[m.yr]=(run[m.yr]??-1)+1,r=m.score!=null?3.5+(m.score-lo)/((hi-lo)||1)*4:3;
+    g+=`<circle class="dot" data-m="${m.id}" cx="${30+(m.yr-o.yr)*14}" cy="${H-36-k*15}" r="${r.toFixed(1)}"><title>${esc(m.title)} (${esc(m.year)}) ⭐ ${m.score??"–"}</title></circle>`});
+   $("tl").innerHTML=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block">${g}</svg>`;
+  }
   list();
 }
 function openDetail(m){
@@ -113,6 +125,9 @@ $("dx").onclick=()=>$("detail").classList.remove("open");
 ["q","sort","fg","fl"].forEach(i=>$(i).addEventListener("input",list));
 $("chips").innerHTML=["All","Movie","TV Show","Short Film"].map(t=>`<button class="${t==="All"?"on":""}">${t}</button>`).join("");
 $("chips").querySelectorAll("button").forEach(b=>b.onclick=()=>{type=b.textContent;$("chips").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));render()});
+const mk=(t,f)=>{const b=document.createElement("button");b.textContent=t;b.style.borderColor="var(--b)";b.onclick=f;$("chips").appendChild(b)};
+mk("📊 Stats",()=>$("charts").scrollIntoView({behavior:"smooth"}));
+mk("🎲 Surprise me",()=>{if(TOP.length)openDetail(TOP[Math.floor(Math.random()*TOP.length)])});
 $("x").onclick=()=>$("panel").classList.remove("open");
 fetch("/api/data").then(r=>r.json()).then(d=>{ALL=d.map(norm).filter(m=>m.title);ALL.forEach((m,i)=>{m.id=i;m.rank=m.score==null?null:1+ALL.filter(x=>x.score!=null&&x.score>m.score).length});const opt=(l,a)=>`<option value="">${l}</option>`+[...new Set(a)].sort().map(x=>`<option>${esc(x)}</option>`).join("");$("fg").innerHTML=opt("All genres",ALL.flatMap(m=>m.genres));$("fl").innerHTML=opt("All languages",ALL.flatMap(m=>m.langs));render()}).catch(()=>$("sub").textContent="Couldn’t load the sheet. Check it is shared as “Anyone with the link”.");
 </script></body></html>
