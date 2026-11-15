@@ -24,33 +24,34 @@ h2{font-size:22px;margin:28px 0 4px}.row{display:grid;grid-template-columns:130p
 .item img{width:46px;height:68px;object-fit:cover;border-radius:6px;background:#0e171d}.item b{display:block}
 .hist{display:flex;align-items:flex-end;gap:6px;height:160px}.hist div{flex:1;text-align:center;cursor:pointer}
 .hist i{display:block;background:var(--b);border-radius:6px 6px 0 0;transition:height .9s}.hist div:hover i{background:var(--a)}.hist small{font-size:11px;color:var(--mut)}
-#panel{position:fixed;top:0;right:0;height:100%;width:min(380px,100%);background:var(--card);border-left:1px solid var(--line);padding:18px;transform:translateX(100%);transition:.3s;z-index:9;display:flex;flex-direction:column}
-#panel.open{transform:none}#plist{overflow-y:auto;flex:1}#panel h3{font-family:Fraunces,serif;margin:0 0 4px}
+#panel,#detail{position:fixed;top:0;right:0;height:100%;width:min(420px,100%);background:var(--card);border-left:1px solid var(--line);padding:18px;transform:translateX(100%);transition:.3s;z-index:9;display:flex;flex-direction:column}
+#panel.open,#detail.open{transform:none}#detail{z-index:10}#dbody{overflow-y:auto;flex:1}#dbody img{width:100%;max-width:240px;border-radius:10px;margin-bottom:8px}#dbody p{margin:6px 0}[data-m]{cursor:pointer}.item:hover,.card:hover{background:#1d3040}.ctl{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}#q{flex:1 1 220px;width:auto}select{padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--tx);font:inherit}#plist{overflow-y:auto;flex:1}#panel h3{font-family:Fraunces,serif;margin:0 0 4px}
 input{width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--tx);font:inherit}
 .card{display:flex;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0}
 .card img{width:110px;height:160px;object-fit:cover;border-radius:8px}.card h3{margin:0 0 4px;font-family:Fraunces,serif}
 </style></head><body>
 <header><h1>🎬 Noel’s Movie Rankings</h1><div class="mut" id="sub">Loading…</div></header>
-<nav><button class="on" data-p="stats">📊 Stats</button><button data-p="results">📋 Results</button></nav>
 <div class="chips" id="chips"></div>
 <main>
 <section id="stats">
  <div class="tiles" id="tiles"></div>
  <div class="two"><div><h2>Top 10</h2><div class="box" id="top"></div></div><div><h2>Bottom 10</h2><div class="box" id="bot"></div></div></div>
+ <h2>All titles</h2><div class="ctl"><input id="q" placeholder="🔎 Search by title…"><select id="sort"><option value="new">Last watched (newest)</option><option value="old">Last watched (oldest)</option><option value="hi">Ultimate score (high → low)</option><option value="lo">Ultimate score (low → high)</option><option value="gen">General score (high → low)</option></select><select id="fg"></select><select id="fl"></select></div><div id="rlist"></div>
  <h2>Score distribution</h2><div class="mut">Click a bar to see the titles.</div><div class="box"><div class="hist" id="hist"></div></div>
  <h2>Average score by genre</h2><div class="box" id="avg"></div>
  <h2>By genre</h2><div class="mut">Click a bar to see the titles.</div><div class="box" id="genre"></div>
  <h2>By language</h2><div class="box" id="lang"></div>
  <h2>By year</h2><div class="box" id="year"></div>
 </section>
-<section id="results" class="hide"><input id="q" placeholder="🔎 Search by title…"><div id="rlist"></div></section>
 </main>
+<aside id="detail"><button id="dx" style="align-self:flex-end">Close ✕</button><div id="dbody"></div></aside>
 <aside id="panel"><button id="x" style="align-self:flex-end">Close ✕</button><h3 id="ptitle"></h3><div class="mut" id="pcount"></div><div id="plist"></div></aside>
 <script>
 const $=id=>document.getElementById(id);let ALL=[],type="All";
 const num=v=>{const n=parseFloat(v);return isNaN(n)?null:n};
 const split=s=>(s||"").split(",").map(x=>x.trim()).filter(Boolean);
 const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+function tsv(s){const m=(s||"").match(/(\d+)\/(\d+)\/(\d+)[ ,]*(\d+)?:?(\d+)?:?(\d+)?/);if(m){let a=+m[1],b=+m[2],mo=a,da=b;if(a>12){mo=b;da=a}return new Date(+m[3],mo-1,da,+m[4]||0,+m[5]||0,+m[6]||0).getTime()}const p=Date.parse(s);return isNaN(p)?0:p}
 function norm(r){
   let t=r["Title"]||r["Name"]||r["Movie/TV Show Name"]||"";
   const tk=Object.keys(r).find(k=>/^type$/i.test(k)); let ty=tk?r[tk]:"";
@@ -58,14 +59,14 @@ function norm(r){
   if(m){t=t.replace(m[0],"");ty=ty||m[1]}
   ty=/tv/i.test(ty)?"TV Show":/short/i.test(ty)?"Short Film":"Movie";
   return{title:t,type:ty,year:(r["Year"]||"").trim(),yr:parseInt(r["Year"])||null,genres:split(r["Genres"]),langs:split(r["Language"]),
-   score:num(r["Ultimate Score"]),poster:r["Poster"]||"",desc:r["Description"]||"",comment:r["Comment"]||"",ts:r["Timestamp"]||""};
+   score:num(r["Ultimate Score"]),poster:r["Poster"]||"",desc:r["Description"]||"",comment:r["Comment"]||"",ts:r["Timestamp"]||"",t:tsv(r["Timestamp"]),gs:num(r["General Score"]),raw:r};
 }
 function openPanel(title,items){
   $("ptitle").textContent=title;$("pcount").textContent=items.length+" titles";
   $("plist").innerHTML=[...items].sort((a,b)=>(b.score??-1)-(a.score??-1)).map(itemHTML).join("");$("panel").classList.add("open");
 }
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const itemHTML=m=>`<div class="item"><img src="${esc(m.poster)}" alt="" onerror="this.style.visibility='hidden'"><div><b>${esc(m.title)}</b><span class="mut">${esc(m.year)} · ${m.type}${m.score!=null?" · ⭐ "+m.score:""}</span></div></div>`;
+const itemHTML=m=>`<div class="item" data-m="${m.id}"><img src="${esc(m.poster)}" alt="" onerror="this.style.visibility='hidden'"><div><b>${esc(m.title)}</b><span class="mut">${esc(m.year)} · ${m.type}${m.score!=null?" · ⭐ "+m.score:""}</span></div></div>`;
 function bars(id,entries,fmt=v=>v){
   const mx=Math.max(...entries.map(e=>e.v),1);
   $(id).innerHTML=entries.map((e,i)=>`<div class="row" data-i="${i}" title="${esc(e.items.slice(0,5).map(m=>m.title).join(", ")+(e.items.length>5?" +"+(e.items.length-5)+" more":""))}"><span>${esc(e.k)}</span><div class="track"><div class="fill" style="width:0" data-w="${e.v/mx*100}"></div></div><span>${fmt(e.v)}</span></div>`).join("");
@@ -93,15 +94,25 @@ function render(){
   bars("genre",Object.entries(gG).map(([k,v])=>({k,items:v,v:v.length})).sort((a,b)=>b.v-a.v));
   bars("lang",Object.entries(group(d,m=>m.langs)).map(([k,v])=>({k,items:v,v:v.length})).sort((a,b)=>b.v-a.v));
   bars("year",Object.entries(group(d,m=>m.yr?[m.yr]:[])).map(([k,v])=>({k,items:v,v:v.length})).sort((a,b)=>b.k-a.k));
-  results();
+  list();
 }
-function results(){
-  const q=$("q").value.toLowerCase(),d=ALL.filter(m=>(type==="All"||m.type===type)&&m.title.toLowerCase().includes(q)).sort((a,b)=>(b.ts>a.ts)-(b.ts<a.ts));
-  $("rlist").innerHTML=d.map(m=>`<div class="card"><img src="${esc(m.poster)}" alt="" onerror="this.style.visibility='hidden'"><div><h3>${esc(m.title)} (${esc(m.year)})</h3><div class="mut">${m.type} · ${esc(m.genres.join(", "))} · ${esc(m.langs.join(", "))}</div><p>⭐ ${m.score??"–"}</p><p>${esc(m.desc)}</p><p class="mut">${esc(m.comment)}</p></div></div>`).join("")||"<p class='mut'>No titles match.</p>";
+function openDetail(m){
+  const gsc=Object.keys(m.raw).filter(k=>/Score/.test(k)&&!/^(Ultimate|General) Score$/.test(k)&&m.raw[k]).map(k=>`<p>🎯 ${esc(k)}: ${esc(m.raw[k])}</p>`).join("");
+  $("dbody").innerHTML=`<img src="${esc(m.poster)}" alt="" onerror="this.style.display='none'"><h3 style="font-family:Fraunces,serif;margin:4px 0">${esc(m.title)} (${esc(m.year)})</h3><p class="mut">${m.type}</p><p>🏆 Ultimate Ranking: #${m.rank??"–"}</p><p>🎭 Genres: ${esc(m.genres.join(", ")||"–")}</p><p>🌐 Language(s): ${esc(m.langs.join(", ")||"–")}</p><p>⭐ Ultimate Score: ${m.score??"–"} | General Score: ${m.gs??"–"}</p>${gsc}${m.desc?`<p><b>📝 Description:</b> ${esc(m.desc)}</p>`:""}${m.comment?`<p><b>💭 My Comment:</b> ${esc(m.comment)}</p>`:""}<p class="mut">Logged: ${esc(m.ts||"–")}</p>`;
+  $("detail").classList.add("open");
 }
-document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));$("stats").classList.toggle("hide",b.dataset.p!=="stats");$("results").classList.toggle("hide",b.dataset.p!=="results")});
+function list(){
+  const q=$("q").value.toLowerCase(),g=$("fg").value,l=$("fl").value,s=$("sort").value;
+  const by={new:(a,b)=>b.t-a.t||b.id-a.id,old:(a,b)=>a.t-b.t||a.id-b.id,hi:(a,b)=>(b.score??-1)-(a.score??-1),lo:(a,b)=>(a.score??1e9)-(b.score??1e9),gen:(a,b)=>(b.gs??-1)-(a.gs??-1)}[s];
+  const d=ALL.filter(m=>(type==="All"||m.type===type)&&m.title.toLowerCase().includes(q)&&(!g||m.genres.includes(g))&&(!l||m.langs.includes(l))).sort(by);
+  $("rlist").innerHTML=`<p class="mut">${d.length} found</p>`+(d.map((m,i)=>`<div class="card" data-m="${m.id}"><img loading="lazy" src="${esc(m.poster)}" alt="" onerror="this.style.visibility='hidden'"><div><h3>#${i+1}. ${esc(m.title)} (${esc(m.year)})</h3><p class="mut">🏆 Ultimate Ranking: #${m.rank??"–"} · ${m.type}</p><p>🎭 ${esc(m.genres.join(", "))}</p><p>🌐 ${esc(m.langs.join(", "))}</p><p>⭐ Ultimate Score: ${m.score??"–"} | General Score: ${m.gs??"–"}</p><p>${esc(m.desc)}</p><p class="mut">💭 ${esc(m.comment)}</p></div></div>`).join("")||"<p class='mut'>No titles match.</p>");
+}
+document.addEventListener("click",e=>{const t=e.target.closest("[data-m]");if(t)openDetail(ALL[+t.dataset.m])});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){if($("detail").classList.contains("open"))$("detail").classList.remove("open");else $("panel").classList.remove("open")}});
+$("dx").onclick=()=>$("detail").classList.remove("open");
+["q","sort","fg","fl"].forEach(i=>$(i).addEventListener("input",list));
 $("chips").innerHTML=["All","Movie","TV Show","Short Film"].map(t=>`<button class="${t==="All"?"on":""}">${t}</button>`).join("");
 $("chips").querySelectorAll("button").forEach(b=>b.onclick=()=>{type=b.textContent;$("chips").querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));render()});
-$("x").onclick=()=>$("panel").classList.remove("open");$("q").oninput=results;
-fetch("/api/data").then(r=>r.json()).then(d=>{ALL=d.map(norm).filter(m=>m.title);render()}).catch(()=>$("sub").textContent="Couldn’t load the sheet. Check it is shared as “Anyone with the link”.");
+$("x").onclick=()=>$("panel").classList.remove("open");
+fetch("/api/data").then(r=>r.json()).then(d=>{ALL=d.map(norm).filter(m=>m.title);ALL.forEach((m,i)=>{m.id=i;m.rank=m.score==null?null:1+ALL.filter(x=>x.score!=null&&x.score>m.score).length});const opt=(l,a)=>`<option value="">${l}</option>`+[...new Set(a)].sort().map(x=>`<option>${esc(x)}</option>`).join("");$("fg").innerHTML=opt("All genres",ALL.flatMap(m=>m.genres));$("fl").innerHTML=opt("All languages",ALL.flatMap(m=>m.langs));render()}).catch(()=>$("sub").textContent="Couldn’t load the sheet. Check it is shared as “Anyone with the link”.");
 </script></body></html>
