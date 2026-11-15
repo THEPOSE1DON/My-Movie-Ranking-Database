@@ -138,7 +138,7 @@ if st.session_state.page == "Results":
 
     if selected_type != "All":
     filtered_df = filtered_df[filtered_df["Type"] == selected_type]
-
+    
     if selected_genres:
         filtered_df = filtered_df[filtered_df["Genres"].apply(lambda x: all(g in x for g in selected_genres if isinstance(x,str)))]
 
