@@ -14,7 +14,15 @@ df = pd.read_csv(csv_url, quotechar='"', engine='python')
 
 # --- Clean columns ---
 df.columns = df.columns.str.strip()
-df.rename(columns={"Movie/TV Show Name": "Title"}, inplace=True)
+df.rename(columns={"Movie/TV Show Name": "Title", "Name": "Title"}, inplace=True)
+
+# Work out Type (Movie / TV Show / Short Film)
+if "Type" not in df.columns:
+    df["Type"] = ""
+df["Type"] = df["Type"].fillna("")
+suffix = df["Title"].str.extract(r"\((TV Show|Short Film)\)\s*$", flags=re.IGNORECASE)[0]
+df["Type"] = df["Type"].where(df["Type"] != "", suffix).fillna("Movie")
+df["Title"] = df["Title"].str.replace(r"\s*\((TV Show|Short Film)\)\s*$", "", regex=True, case=False)
 df["Ultimate Ranking"] = df["Ultimate Score"].rank(method="min", ascending=False).astype(int)
 
 # --- Page state ---
@@ -89,6 +97,7 @@ if st.session_state.page == "Results":
 
     # --- Search ---
     search_term = st.sidebar.text_input("🔎 Search by Title")
+    selected_type = st.sidebar.selectbox("🎞️ Type", ["All", "Movie", "TV Show", "Short Film"])
 
     # --- Languages ---
     all_languages = df["Language"].dropna().apply(lambda x: [lang.strip() for lang in str(x).split(",")]).sum()
@@ -126,6 +135,9 @@ if st.session_state.page == "Results":
 
     if search_term:
         filtered_df = filtered_df[filtered_df["Title"].str.contains(search_term, case=False, na=False)]
+
+    if selected_type != "All":
+    filtered_df = filtered_df[filtered_df["Type"] == selected_type]
 
     if selected_genres:
         filtered_df = filtered_df[filtered_df["Genres"].apply(lambda x: all(g in x for g in selected_genres if isinstance(x,str)))]
